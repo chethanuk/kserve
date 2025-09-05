@@ -237,6 +237,9 @@ func (isvc *InferenceService) setPredictorModelDefaults() {
 	case isvc.Spec.Predictor.XGBoost != nil:
 		isvc.assignXGBoostRuntime()
 
+	case isvc.Spec.Predictor.CatBoost != nil:
+		isvc.assignCatBoostRuntime()
+
 	case isvc.Spec.Predictor.PyTorch != nil:
 		isvc.assignPyTorchRuntime()
 
@@ -307,6 +310,15 @@ func (isvc *InferenceService) assignXGBoostRuntime() {
 	}
 	// remove xgboost spec
 	isvc.Spec.Predictor.XGBoost = nil
+}
+
+func (isvc *InferenceService) assignCatBoostRuntime() {
+	isvc.Spec.Predictor.Model = &ModelSpec{
+		ModelFormat:            ModelFormat{Name: constants.SupportedModelCatBoost},
+		PredictorExtensionSpec: isvc.Spec.Predictor.CatBoost.PredictorExtensionSpec,
+	}
+	// remove catboost spec
+	isvc.Spec.Predictor.CatBoost = nil
 }
 
 func (isvc *InferenceService) assignPyTorchRuntime() {
@@ -438,6 +450,8 @@ func (isvc *InferenceService) SetMlServerDefaults() {
 	switch isvc.Spec.Predictor.Model.ModelFormat.Name {
 	case constants.SupportedModelXGBoost:
 		modelClass = constants.MLServerModelClassXGBoost
+	case constants.SupportedModelCatBoost:
+		modelClass = constants.MLServerModelClassCatBoost
 	case constants.SupportedModelLightGBM:
 		modelClass = constants.MLServerModelClassLightGBM
 	case constants.SupportedModelMLFlow:

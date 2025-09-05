@@ -40,6 +40,8 @@ type PredictorSpec struct {
 	SKLearn *SKLearnSpec `json:"sklearn,omitempty"`
 	// Spec for XGBoost model server
 	XGBoost *XGBoostSpec `json:"xgboost,omitempty"`
+	// Spec for CatBoost model server
+	CatBoost *CatBoostSpec `json:"catboost,omitempty"`
 	// Spec for TFServing (https://github.com/tensorflow/serving)
 	Tensorflow *TFServingSpec `json:"tensorflow,omitempty"`
 	// Spec for TorchServe (https://pytorch.org/serve)
@@ -168,6 +170,7 @@ type ConfidentialSpec struct {
 func (s *PredictorSpec) GetImplementations() []ComponentImplementation {
 	implementations := NonNilComponents([]ComponentImplementation{
 		s.XGBoost,
+		s.CatBoost,
 		s.PyTorch,
 		s.Triton,
 		s.SKLearn,

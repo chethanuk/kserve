@@ -90,6 +90,9 @@ deploy-dev-sklearn: docker-push-sklearn
 deploy-dev-xgb: docker-push-xgb
 	./hack/serving_runtime_image_patch.sh "kserve-xgbserver.yaml" "${KO_DOCKER_REPO}/${XGB_IMG}"
 
+deploy-dev-catboost: docker-push-catboost
+	./hack/serving_runtime_image_patch.sh "kserve-catboostserver.yaml" "${KO_DOCKER_REPO}/${CATBOOST_IMG}"
+
 deploy-dev-lgb: docker-push-lgb
 	./hack/serving_runtime_image_patch.sh "kserve-lgbserver.yaml" "${KO_DOCKER_REPO}/${LGB_IMG}"
 

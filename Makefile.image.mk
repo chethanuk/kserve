@@ -57,6 +57,12 @@ docker-build-xgb:
 docker-push-xgb: docker-build-xgb
 	${ENGINE} push ${KO_DOCKER_REPO}/${XGB_IMG}:${TAG}
 
+docker-build-catboost:
+	cd python && ${ENGINE} buildx build ${ARCH} --build-arg BASE_IMAGE=${BASE_IMG} -t ${KO_DOCKER_REPO}/${CATBOOST_IMG}:${TAG} -f catboost.Dockerfile .
+
+docker-push-catboost: docker-build-catboost
+	${ENGINE} push ${KO_DOCKER_REPO}/${CATBOOST_IMG}:${TAG}
+
 docker-build-lgb:
 	cd python && ${ENGINE} buildx build ${ARCH} --build-arg BASE_IMAGE=${BASE_IMG} -t ${KO_DOCKER_REPO}/${LGB_IMG}:${TAG} -f lgb.Dockerfile .
 
