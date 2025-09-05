@@ -611,6 +611,7 @@ const (
 const (
 	MLServerModelClassSKLearn  = "mlserver_sklearn.SKLearnModel"
 	MLServerModelClassXGBoost  = "mlserver_xgboost.XGBoostModel"
+	MLServerModelClassCatBoost = "mlserver_catboost.CatBoostModel"
 	MLServerModelClassLightGBM = "mlserver_lightgbm.LightGBMModel"
 	MLServerModelClassMLFlow   = "mlserver_mlflow.MLflowRuntime"
 )
@@ -626,6 +627,7 @@ const (
 	SupportedModelSKLearn     = "sklearn"
 	SupportedModelTensorflow  = "tensorflow"
 	SupportedModelXGBoost     = "xgboost"
+	SupportedModelCatBoost    = "catboost"
 	SupportedModelPyTorch     = "pytorch"
 	SupportedModelONNX        = "onnx"
 	SupportedModelHuggingFace = "huggingface"
