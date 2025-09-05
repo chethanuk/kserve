@@ -27,9 +27,7 @@ MODEL_EXTENSIONS = (".cbm", ".bin")
 
 
 class CatBoostModel(Model):
-    def __init__(
-        self, name: str, model_dir: str, model: cb.CatBoost = None
-    ):
+    def __init__(self, name: str, model_dir: str, model: cb.CatBoost = None):
         super().__init__(name)
         self.name = name
         self.model_dir = model_dir
@@ -46,10 +44,10 @@ class CatBoostModel(Model):
                 model_files.append(file_path)
         if len(model_files) == 0:
             raise ModelMissingError(model_path)
-        
+
         # If multiple model files exist, prefer .cbm over .bin
         if len(model_files) > 1:
-            cbm_files = [f for f in model_files if f.endswith('.cbm')]
+            cbm_files = [f for f in model_files if f.endswith(".cbm")]
             if cbm_files:
                 model_files = [cbm_files[0]]  # Use first .cbm file
             else:

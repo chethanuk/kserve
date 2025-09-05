@@ -415,6 +415,8 @@ func (isvc *InferenceService) SetMlServerDefaults() {
 	switch isvc.Spec.Predictor.Model.ModelFormat.Name {
 	case constants.SupportedModelXGBoost:
 		modelClass = constants.MLServerModelClassXGBoost
+	case constants.SupportedModelCatBoost:
+		modelClass = constants.MLServerModelClassCatBoost
 	case constants.SupportedModelLightGBM:
 		modelClass = constants.MLServerModelClassLightGBM
 	case constants.SupportedModelMLFlow:

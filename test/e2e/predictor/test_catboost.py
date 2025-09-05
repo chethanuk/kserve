@@ -27,7 +27,7 @@ from kserve import (
     V1beta1ModelSpec,
     V1beta1ModelFormat,
 )
-from ..common.utils import KSERVE_TEST_NAMESPACE, predict_isvc, get_runtime_images
+from ..common.utils import KSERVE_TEST_NAMESPACE, predict_isvc
 from ..common.utils import wait_for_pods_ready, wait_for_inference_service_runtime
 
 logging.basicConfig(level=logging.INFO)
@@ -62,13 +62,15 @@ async def test_catboost_kserve():
         spec=V1beta1InferenceServiceSpec(predictor=predictor_spec),
     )
 
-    kserve_client = KServeClient(config_file=os.environ.get("KUBECONFIG", "~/.kube/config"))
-    kserve_client.create(isvc)
-    kserve_client.wait_isvc_ready(service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720)
-
-    await wait_for_pods_ready(
-        service_name, KSERVE_TEST_NAMESPACE, ["kserve-container"]
+    kserve_client = KServeClient(
+        config_file=os.environ.get("KUBECONFIG", "~/.kube/config")
     )
+    kserve_client.create(isvc)
+    kserve_client.wait_isvc_ready(
+        service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
+    )
+
+    await wait_for_pods_ready(service_name, KSERVE_TEST_NAMESPACE, ["kserve-container"])
 
     await wait_for_inference_service_runtime(
         kserve_client, service_name, KSERVE_TEST_NAMESPACE, MODEL_NAME
@@ -102,7 +104,8 @@ async def test_catboost_runtime_kserve():
             model_format=V1beta1ModelFormat(
                 name="catboost",
             ),
-            runtime=get_runtime_images().get(PREDICTOR),
+            # Runtime image can be specified via environment variable or left as default
+            runtime=os.environ.get("CATBOOST_RUNTIME_IMAGE"),
             storage_uri="gs://kfserving-examples/models/catboost/iris",
             protocol_version=protocol_version,
             resources=client.V1ResourceRequirements(
@@ -121,13 +124,15 @@ async def test_catboost_runtime_kserve():
         spec=V1beta1InferenceServiceSpec(predictor=predictor_spec),
     )
 
-    kserve_client = KServeClient(config_file=os.environ.get("KUBECONFIG", "~/.kube/config"))
-    kserve_client.create(isvc)
-    kserve_client.wait_isvc_ready(service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720)
-
-    await wait_for_pods_ready(
-        service_name, KSERVE_TEST_NAMESPACE, ["kserve-container"]
+    kserve_client = KServeClient(
+        config_file=os.environ.get("KUBECONFIG", "~/.kube/config")
     )
+    kserve_client.create(isvc)
+    kserve_client.wait_isvc_ready(
+        service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
+    )
+
+    await wait_for_pods_ready(service_name, KSERVE_TEST_NAMESPACE, ["kserve-container"])
 
     await wait_for_inference_service_runtime(
         kserve_client, service_name, KSERVE_TEST_NAMESPACE, MODEL_NAME

@@ -28,16 +28,17 @@ async def test_load():
     with tempfile.TemporaryDirectory() as temp_dir:
         model_dir = os.path.join(temp_dir, "model")
         os.makedirs(model_dir)
-        
+
         # Copy example model
         import shutil
+
         example_model_path = os.path.join(example_model_dir, "model", "model.cbm")
         shutil.copy(example_model_path, os.path.join(model_dir, "model.cbm"))
-        
+
         # Test model repository
         repository = CatBoostModelRepository(temp_dir)
         await repository.load("model")
-        
+
         loaded_model = repository.get_model("model")
         assert loaded_model is not None
         assert loaded_model.ready
@@ -50,9 +51,9 @@ async def test_load_fail():
         # Create empty model directory to avoid storage path issues
         model_dir = os.path.join(temp_dir, "non-existent-model")
         os.makedirs(model_dir)
-        
+
         repository = CatBoostModelRepository(temp_dir)
-        
+
         # This should not raise an exception but return False
         result = await repository.load("non-existent-model")
         assert result is False
