@@ -1,0 +1,131 @@
+name: Dev Container Prebuild
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '.devcontainer/**'
+      - '.github/workflows/devcontainer-prebuild.yml'
+  pull_request:
+    paths:
+      - '.devcontainer/**'
+  schedule:
+    # Run weekly to keep the prebuild fresh
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  prebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:v0.12.0
+            network=host
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-devcontainer
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Dev Container image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: .devcontainer/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            GO_VERSION=1.24.1
+            PYTHON_VERSION=3.12
+            NODE_VERSION=20
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/${{ github.repository }}-devcontainer:latest
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.spdx.json
+
+  test-devcontainer:
+    needs: prebuild
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [linux/amd64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test Dev Container
+        run: |
+          docker run --rm \
+            --platform ${{ matrix.platform }} \
+            -v ${{ github.workspace }}:/workspaces/kserve \
+            ghcr.io/${{ github.repository }}-devcontainer:latest \
+            bash -c "cd /workspaces/kserve && go version && python3 --version && kubectl version --client"
+
+      - name: Test build tools
+        run: |
+          docker run --rm \
+            --platform ${{ matrix.platform }} \
+            -v ${{ github.workspace }}:/workspaces/kserve \
+            ghcr.io/${{ github.repository }}-devcontainer:latest \
+            bash -c "ko version && helm version && k3d version"
+
+  # Trigger Codespaces prebuild
+  trigger-codespaces-prebuild:
+    needs: prebuild
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger Codespaces Prebuild
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // This would trigger a Codespaces prebuild if configured
+            // Requires Codespaces prebuilds to be enabled in repository settings
+            console.log('Codespaces prebuild would be triggered here if configured')

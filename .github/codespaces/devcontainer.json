@@ -1,0 +1,51 @@
+{
+  "name": "KServe Development (Codespaces)",
+  "image": "mcr.microsoft.com/devcontainers/universal:2-linux",
+  "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "1.24"
+    },
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12",
+      "installJupyterlab": false
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": true
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "latest",
+      "minikube": "latest"
+    },
+    "ghcr.io/rio/features/k3d:1": {},
+    "ghcr.io/dhoeric/features/k9s:1": {}
+  },
+  "onCreateCommand": "go mod download && cd python/kserve && pip install -e .",
+  "postStartCommand": "if ! k3d cluster list | grep -q kserve; then k3d cluster create kserve --servers 1 --agents 1 --registry-create --wait; fi",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "ms-python.python",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker",
+        "github.copilot"
+      ]
+    },
+    "codespaces": {
+      "openFiles": [
+        "README.md",
+        ".devcontainer/COMPARISON.md"
+      ]
+    }
+  },
+  "forwardPorts": [8080, 5000],
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "remoteUser": "vscode"
+}

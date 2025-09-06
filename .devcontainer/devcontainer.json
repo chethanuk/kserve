@@ -1,0 +1,76 @@
+{
+  "name": "KServe Development Environment",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".",
+    "args": {
+      "GO_VERSION": "1.23.4",
+      "PYTHON_VERSION": "3.12",
+      "KUBECTL_VERSION": "v1.31.0"
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "version": "latest",
+      "enableNonRootDocker": true
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    }
+  },
+  "onCreateCommand": "bash -c 'chmod +x .devcontainer/scripts/*.sh && .devcontainer/scripts/onCreate.sh'",
+  "postCreateCommand": "bash -c '.devcontainer/scripts/postCreate.sh'",
+  "postStartCommand": "bash -c '.devcontainer/scripts/postStart.sh'",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "ms-python.python",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "go.toolsManagement.checkForUpdates": "local",
+        "go.useLanguageServer": true,
+        "go.lintTool": "golangci-lint",
+        "go.formatTool": "goimports",
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.linting.enabled": true,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "forwardPorts": [8080, 8443, 5000],
+  "portsAttributes": {
+    "8080": {
+      "label": "KServe HTTP",
+      "onAutoForward": "notify"
+    },
+    "5000": {
+      "label": "Docker Registry",
+      "onAutoForward": "silent"
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "remoteUser": "vscode",
+  "containerEnv": {
+    "GOPATH": "/home/vscode/go",
+    "PATH": "/home/vscode/go/bin:/usr/local/go/bin:/home/vscode/.local/bin:${PATH}",
+    "KUBECONFIG": "/home/vscode/.kube/config",
+    "KO_DOCKER_REPO": "localhost:5000",
+    "KSERVE_NAMESPACE": "kserve-test",
+    "DOCKER_BUILDKIT": "1"
+  },
+  "runArgs": [
+    "--cap-add=SYS_PTRACE",
+    "--security-opt=seccomp=unconfined"
+  ]
+}
