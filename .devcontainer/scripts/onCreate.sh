@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e
 
+# Check if essential commands are available
+if ! command -v cat &> /dev/null; then
+    echo "ERROR: 'cat' command not found. Installing coreutils..."
+    apt-get update && apt-get install -y coreutils || true
+fi
+
+if ! command -v sleep &> /dev/null; then
+    echo "ERROR: 'sleep' command not found. Installing coreutils..."
+    apt-get update && apt-get install -y coreutils || true
+fi
+
 echo "🚀 Starting KServe development environment initial setup..."
 
 # Colors for output
@@ -28,7 +39,7 @@ export PATH="${GOPATH}/bin:/usr/local/go/bin:${HOME}/.local/bin:${PATH}"
 # Check if running in the container
 if [ ! -d "/workspaces/kserve" ]; then
     warn "Not in expected workspace directory, adjusting..."
-    cd /workspace/kserve || cd /workspaces/kserve || true
+    cd /workspace/kserve || cd /workspaces/kserve || cd /var/lib/docker/codespacemount/workspace/kserve || true
 fi
 
 # Install Python dependencies if directory exists
@@ -51,8 +62,12 @@ else
 fi
 
 # Install essential Go tools
-info "Installing Go development tools..."
-go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.2 || true
-go install github.com/google/ko@latest || true
+if command -v go &> /dev/null; then
+    info "Installing Go development tools..."
+    go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.2 || true
+    go install github.com/google/ko@latest || true
+else
+    warn "Go not found, skipping Go tools installation"
+fi
 
 info "✅ onCreate setup completed!"

@@ -1,8 +1,9 @@
-# Use Microsoft's official devcontainer base image
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
+# Use Microsoft's universal devcontainer image which includes essential tools
+# This image has coreutils and other essential utilities pre-installed
+FROM mcr.microsoft.com/devcontainers/universal:2-linux
 
-# Build arguments - Fixed Go version to actual latest
-ARG GO_VERSION=1.23.4
+# Build arguments - Using Go version from go.mod and CI
+ARG GO_VERSION=1.24.1
 ARG PYTHON_VERSION=3.12
 ARG KUBECTL_VERSION=v1.31.0
 ARG HELM_VERSION=v3.16.0
@@ -18,9 +19,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV GOPATH=/go
 ENV PATH=/go/bin:/usr/local/go/bin:${PATH}
 
-# Install base dependencies and development tools
+# First ensure essential utilities are available for Docker-in-Docker feature
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        # Essential utilities that Docker-in-Docker needs
+        coreutils \
+        procps \
+        util-linux \
         # Basic tools
         curl wget git vim nano jq unzip \
         # Build tools
@@ -36,7 +41,7 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install Go - using correct version
+# Install Go - using version matching go.mod and CI
 RUN wget -q https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.gz && \
     tar -C /usr/local -xzf /tmp/go.tar.gz && \
     rm /tmp/go.tar.gz && \
@@ -46,7 +51,7 @@ RUN wget -q https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -O /tmp/go.tar.
 # Install essential Go tools
 RUN go install golang.org/x/tools/gopls@latest && \
     go install github.com/go-delve/delve/cmd/dlv@latest && \
-    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.0 && \
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2 && \
     go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.2 && \
     go install github.com/google/ko@${KO_VERSION}
 
@@ -88,27 +93,32 @@ RUN curl -Lo k9s.tar.gz https://github.com/derailed/k9s/releases/download/v0.32.
     rm -f k9s.tar.gz LICENSE README.md || true
 
 # Create directories for development
-RUN mkdir -p /go/src /go/bin /go/pkg /home/vscode/.cache
+RUN mkdir -p /go/src /go/bin /go/pkg /home/codespace/.cache
 
-# Set up the vscode user (standard for devcontainers)
-ARG USERNAME=vscode
+# Set up the user (codespace for universal image, vscode for others)
+ARG USERNAME=codespace
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-RUN groupadd --gid $USER_GID $USERNAME || true && \
-    useradd --uid $USER_UID --gid $USER_GID -m $USERNAME || true && \
+# The codespace user already exists in the universal image, just ensure sudo access
+RUN if ! id -u $USERNAME > /dev/null 2>&1; then \
+        (groupadd --gid $USER_GID $USERNAME || true) && \
+        (useradd --uid $USER_UID --gid $USER_GID -m $USERNAME || true); \
+    fi && \
     echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME
 
-# Give vscode user access to Go directories
-RUN chown -R $USERNAME:$USERNAME /go || true
+# Give vscode user access to Go directories (only if user exists)
+RUN if id -u $USERNAME > /dev/null 2>&1; then \
+        chown -R $USERNAME:$USERNAME /go || true; \
+    fi
 
 # Switch to vscode user
 USER $USERNAME
 
 # Set up user environment
-ENV GOPATH=/home/vscode/go
-ENV PATH=$PATH:/home/vscode/go/bin:/home/vscode/.local/bin
+ENV GOPATH=/home/codespace/go
+ENV PATH=$PATH:/home/codespace/go/bin:/home/codespace/.local/bin
 
 WORKDIR /workspaces/kserve
 

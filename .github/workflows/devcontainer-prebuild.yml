@@ -68,7 +68,7 @@ jobs:
           build-args: |
             GO_VERSION=1.24.1
             PYTHON_VERSION=3.12
-            NODE_VERSION=20
+            KUBECTL_VERSION=v1.31.0
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0

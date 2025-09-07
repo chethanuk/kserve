@@ -4,7 +4,7 @@
     "dockerfile": "Dockerfile",
     "context": ".",
     "args": {
-      "GO_VERSION": "1.23.4",
+      "GO_VERSION": "1.24.1",
       "PYTHON_VERSION": "3.12",
       "KUBECTL_VERSION": "v1.31.0"
     }
@@ -60,11 +60,11 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  "remoteUser": "vscode",
+  "remoteUser": "codespace",
   "containerEnv": {
-    "GOPATH": "/home/vscode/go",
-    "PATH": "/home/vscode/go/bin:/usr/local/go/bin:/home/vscode/.local/bin:${PATH}",
-    "KUBECONFIG": "/home/vscode/.kube/config",
+    "GOPATH": "/home/codespace/go",
+    "PATH": "/home/codespace/go/bin:/usr/local/go/bin:/home/codespace/.local/bin:${PATH}",
+    "KUBECONFIG": "/home/codespace/.kube/config",
     "KO_DOCKER_REPO": "localhost:5000",
     "KSERVE_NAMESPACE": "kserve-test",
     "DOCKER_BUILDKIT": "1"
