@@ -11,7 +11,7 @@ type_check:
 	mypy --ignore-missing-imports catboostserver
 
 fmt:
-	python -m black . --config ../pyproject.toml
+	python -m ruff format .
 
 lint:
-	python -m flake8 . --config=../.flake8
+	python -m ruff check .
