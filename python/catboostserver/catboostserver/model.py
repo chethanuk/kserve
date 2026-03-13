@@ -23,7 +23,7 @@ from kserve.utils.utils import get_predict_input, get_predict_response
 from kserve import Model
 from kserve_storage import Storage
 
-MODEL_EXTENSIONS = (".cbm", ".bin")
+MODEL_EXTENSIONS = (".cbm",)
 
 
 class CatBoostModel(Model):
@@ -45,13 +45,8 @@ class CatBoostModel(Model):
         if len(model_files) == 0:
             raise ModelMissingError(model_path)
 
-        # If multiple model files exist, prefer .cbm over .bin
         if len(model_files) > 1:
-            cbm_files = [f for f in model_files if f.endswith(".cbm")]
-            if cbm_files:
-                model_files = [cbm_files[0]]  # Use first .cbm file
-            else:
-                model_files = [model_files[0]]  # Use first available file
+            model_files = [model_files[0]]
 
         self._model = cb.CatBoost()
         self._model.load_model(model_files[0])
