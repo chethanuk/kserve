@@ -14,6 +14,7 @@
 
 import os
 from kserve.model_repository import ModelRepository, MODEL_MOUNT_DIRS
+from kserve.logging import logger
 from catboostserver import CatBoostModel
 
 
@@ -31,6 +32,6 @@ class CatBoostModelRepository(ModelRepository):
             if model.load():
                 self.update(model)
             return model.ready
-        except Exception:
-            # Return False if model loading fails
+        except Exception as e:
+            logger.exception("Failed to load model %s: %s", name, e)
             return False
