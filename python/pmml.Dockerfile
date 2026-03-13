@@ -1,6 +1,6 @@
-ARG PYTHON_VERSION=3.11
+ARG PYTHON_VERSION=3.12
 ARG JAVA_VERSION=21
-ARG BASE_IMAGE=openjdk:${JAVA_VERSION}-slim-bookworm
+ARG BASE_IMAGE=eclipse-temurin:${JAVA_VERSION}-jdk-noble
 ARG VENV_PATH=/prod_venv
 
 FROM ${BASE_IMAGE} AS builder
@@ -27,6 +27,9 @@ ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
 RUN uv venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+# Copy storage directory for editable install
+COPY storage storage
 
 # Install dependencies for kserve using uv
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
@@ -73,7 +76,7 @@ ENV VIRTUAL_ENV=${VENV_PATH}
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Create non-root user
-RUN useradd kserve -m -u 1000 -d /home/kserve
+RUN useradd kserve -m -u 1001 -d /home/kserve
 
 COPY --from=builder --chown=kserve:kserve third_party third_party
 COPY --from=builder --chown=kserve:kserve $VIRTUAL_ENV $VIRTUAL_ENV
@@ -81,6 +84,6 @@ COPY --from=builder kserve kserve
 COPY --from=builder storage storage
 COPY --from=builder pmmlserver pmmlserver
 
-USER 1000
+USER 1001
 ENV PYTHONPATH=/pmmlserver
 ENTRYPOINT ["python3", "-m", "pmmlserver"]

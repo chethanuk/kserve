@@ -17,18 +17,37 @@ limitations under the License.
 package v1alpha1
 
 import (
+	kedav1alpha1 "github.com/kedacore/keda/v2/apis/keda/v1alpha1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"knative.dev/pkg/apis"
 	duckv1 "knative.dev/pkg/apis/duck/v1"
-	igwapi "sigs.k8s.io/gateway-api-inference-extension/api/v1alpha2"
+	igwapi "sigs.k8s.io/gateway-api-inference-extension/apix/v1alpha2"
 	gwapiv1 "sigs.k8s.io/gateway-api/apis/v1"
+)
+
+// Criticality defines how important it is to serve the model compared to other models.
+// Criticality is intentionally a bounded enum to contain the possibilities that need to
+// be supported by the load balancing algorithm.
+// +kubebuilder:validation:Enum=Critical;Standard;Sheddable
+type Criticality string
+
+const (
+	// Critical - Requests to this model should be shed last.
+	Critical Criticality = "Critical"
+	// Standard - Requests to this model will be queued or shed before critical traffic.
+	Standard Criticality = "Standard"
+	// Sheddable - Requests to this model should be shed before critical and standard traffic.
+	Sheddable Criticality = "Sheddable"
 )
 
 // LLMInferenceService is the Schema for the llminferenceservices API, representing a single LLM deployment.
 // It orchestrates the creation of underlying Kubernetes resources like Deployments and Services,
 // and configures networking for exposing the model.
 // +k8s:openapi-gen=true
+// +genclient
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="URL",type="string",JSONPath=".status.url"
@@ -63,6 +82,10 @@ type LLMInferenceServiceSpec struct {
 	// +optional
 	Model LLMModelSpec `json:"model"`
 
+	// StorageInitializer configuration for model artifact fetching.
+	// +optional
+	StorageInitializer *StorageInitializerSpec `json:"storageInitializer,omitempty"`
+
 	// WorkloadSpec configurations for the primary inference deployment.
 	// In a standard setup, this defines the main model server deployment.
 	// In a disaggregated setup (when 'prefill' is specified), this configures the 'decode' workload.
@@ -89,15 +112,37 @@ type LLMInferenceServiceSpec struct {
 }
 
 // WorkloadSpec defines the configuration for a deployment workload, such as replicas and pod specifications.
+// +kubebuilder:validation:XValidation:rule="!(has(self.replicas) && has(self.scaling))",message="replicas and scaling are mutually exclusive; use scaling for autoscaled deployments or replicas for static deployments"
 type WorkloadSpec struct {
 	// Number of replicas for the deployment.
 	// +optional
+	// +kubebuilder:validation:Minimum=0
 	Replicas *int32 `json:"replicas,omitempty"`
+
+	// Scaling configuration for autoscaling this workload.
+	// When specified, the controller creates and manages autoscaling resources
+	// (VariantAutoscaling CR, ServiceMonitor, and the selected actuator — HPA or KEDA ScaledObject)
+	// targeting this workload.
+	// Mutually exclusive with the static 'replicas' field.
+	// In a disaggregated setup, each workload (decode and prefill) can have its own independent scaling configuration,
+	// resulting in separate autoscaling resources per workload.
+	// +optional
+	Scaling *ScalingSpec `json:"scaling,omitempty"`
 
 	// Parallelism configurations for the runtime, such as tensor and pipeline parallelism.
 	// These values are used to configure the underlying inference runtime (e.g., vLLM).
 	// +optional
 	Parallelism *ParallelismSpec `json:"parallelism,omitempty"`
+
+	// Labels that will be added to the component pod.
+	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Annotations that will be added to the component pod.
+	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// Template for the main pod spec.
 	// In a multi-node deployment, this configures the "head" or "master" pod.
@@ -128,7 +173,7 @@ type LLMModelSpec struct {
 	// Criticality defines how important it is to serve the model compared to other models.
 	// This is used by the Inference Gateway scheduler.
 	// +optional
-	Criticality *igwapi.Criticality `json:"criticality,omitempty"`
+	Criticality *Criticality `json:"criticality,omitempty"`
 
 	// LoRA (Low-Rank Adaptation) adapters configurations.
 	// Allows for specifying one or more LoRA adapters to be applied to the base model.
@@ -145,6 +190,29 @@ type LoRASpec struct {
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	Adapters []LLMModelSpec `json:"adapters,omitempty"`
+}
+
+// StorageInitializerSpec defines the configuration for the storage initializer.
+// The storage initializer is an initContainer responsible for downloading model artifacts
+// from remote storage (s3://, hf://) before the main container starts.
+//
+// Example - Disable storage initializer:
+//
+//	storageInitializer:
+//	  enabled: false
+//
+// Example - Explicitly enable (same as default):
+//
+//	storageInitializer:
+//	  enabled: true
+type StorageInitializerSpec struct {
+	// Enabled controls whether the storage-initializer initContainer is created.
+	// When nil or true, storage-initializer is created for applicable URIs (s3://, hf://).
+	// When explicitly set to false, storage-initializer creation is skipped.
+	// This is useful when models are pre-loaded via alternative mechanisms (e.g., custom init containers, modelcars).
+	// Default: true (nil is treated as true for backward compatibility)
+	// +optional
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 // RouterSpec defines the routing configuration for exposing the service.
@@ -224,10 +292,34 @@ type SchedulerSpec struct {
 	// +optional
 	Pool *InferencePoolSpec `json:"pool,omitempty"`
 
+	// Labels that will be added to the scheduler component pod.
+	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// Annotations that will be added to the scheduler component pod.
+	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+	// +optional
+	Annotations map[string]string `json:"annotations,omitempty"`
+
 	// Template for the Inference Gateway Extension pod spec.
 	// This configures the Endpoint Picker (EPP) Deployment.
 	// +optional
 	Template *corev1.PodSpec `json:"template,omitempty"`
+
+	// Config is the configuration for the EndpointPicker.
+	Config *SchedulerConfigSpec `json:"config,omitempty"`
+
+	// Replicas is the number of replicas for the scheduler.
+	Replicas *int32 `json:"replicas,omitempty"`
+}
+
+type SchedulerConfigSpec struct {
+	// Inline EndpointPickerConfig
+	Inline *runtime.RawExtension `json:"inline,omitempty"`
+
+	// Ref is a reference to a ConfigMap key with EndpointPickerConfig.
+	Ref *corev1.ConfigMapKeySelector `json:"ref,omitempty"`
 }
 
 // InferencePoolSpec defines the configuration for an InferencePool.
@@ -242,22 +334,144 @@ type InferencePoolSpec struct {
 	Ref *corev1.LocalObjectReference `json:"ref,omitempty"`
 }
 
+// ScalingSpec configures autoscaling for the LLM inference deployment.
+// When scaling is configured, the controller creates and manages autoscaling resources
+// (VariantAutoscaling CR, ServiceMonitor, and the selected actuator — HPA or KEDA ScaledObject).
+// +kubebuilder:validation:XValidation:rule="has(self.wva)",message="wva is required when scaling is configured; it provides the autoscaling mechanism"
+// +kubebuilder:validation:XValidation:rule="!has(self.minReplicas) || self.minReplicas <= self.maxReplicas",message="minReplicas cannot exceed maxReplicas"
+// +kubebuilder:validation:XValidation:rule="!has(self.wva) || !has(self.wva.keda) || !has(self.wva.keda.idleReplicaCount) || has(self.minReplicas)",message="minReplicas is required when idleReplicaCount is set; idleReplicaCount must be less than minReplicas"
+// +kubebuilder:validation:XValidation:rule="!has(self.wva) || !has(self.wva.keda) || !has(self.wva.keda.idleReplicaCount) || !has(self.minReplicas) || self.wva.keda.idleReplicaCount < self.minReplicas",message="idleReplicaCount must be less than minReplicas; idleReplicaCount defines the replica floor when no triggers are active"
+type ScalingSpec struct {
+	// MinReplicas is the minimum number of replicas for the deployment during active scaling.
+	// This is the scaling floor when triggers are active.
+	// For idle scale-down, use KEDA's idleReplicaCount instead.
+	// Defaults to 1 if not specified.
+	// +optional
+	// +kubebuilder:default=1
+	// +kubebuilder:validation:Minimum=1
+	MinReplicas *int32 `json:"minReplicas,omitempty"`
+
+	// MaxReplicas is the maximum number of replicas for the deployment.
+	// +kubebuilder:validation:Minimum=1
+	MaxReplicas int32 `json:"maxReplicas"`
+
+	// WVA configures the Workload Variant Autoscaler (WVA) for scaling.
+	// WVA scales based on a variety of inference metrics (KV cache utilization, queue depth, etc.)
+	// rather than traditional CPU/memory metrics.
+	// +optional
+	WVA *WVASpec `json:"wva,omitempty"`
+}
+
+// WVASpec configures the Workload Variant Autoscaler.
+type WVASpec struct {
+	// VariantCost specifies the cost per replica for this variant (used in saturation analysis).
+	// Must be a non-negative numeric string (e.g., "10", "10.0", "0.5").
+	// Defaults to "10.0" if not specified.
+	// +optional
+	// +kubebuilder:validation:Pattern=`^\d+(\.\d+)?$`
+	// +kubebuilder:default="10.0"
+	VariantCost string `json:"variantCost,omitempty"`
+
+	// ActuatorSpec defines the autoscaling actuator backend (HPA or KEDA).
+	// Exactly one of HPA or KEDA must be specified.
+	ActuatorSpec `json:",inline"`
+}
+
+// ActuatorSpec defines the autoscaling actuator backend for WVA.
+// Exactly one of HPA or KEDA must be specified.
+// +kubebuilder:validation:XValidation:rule="!(has(self.hpa) && has(self.keda))",message="hpa and keda are mutually exclusive; choose one actuator backend"
+// +kubebuilder:validation:XValidation:rule="has(self.hpa) || has(self.keda)",message="either hpa or keda must be specified as the actuator backend"
+type ActuatorSpec struct {
+	// HPA configures the HorizontalPodAutoscaler as the actuator backend.
+	// When specified, HPA reads the wva_desired_replicas metric via the Kubernetes Metrics API
+	// (requires Prometheus Adapter) and scales the deployment accordingly.
+	// Mutually exclusive with KEDA.
+	// +optional
+	HPA *HPAScalingSpec `json:"hpa,omitempty"`
+
+	// KEDA configures a KEDA ScaledObject as the actuator backend.
+	// When specified, KEDA queries Prometheus directly for the wva_desired_replicas metric
+	// and scales the deployment accordingly. KEDA does not require a Prometheus Adapter.
+	// Mutually exclusive with HPA.
+	// +optional
+	KEDA *KEDAScalingSpec `json:"keda,omitempty"`
+}
+
+// HPAScalingSpec configures the HorizontalPodAutoscaler behavior.
+// The fields are directly from the upstream Kubernetes autoscaling/v2 API.
+type HPAScalingSpec struct {
+	// Behavior configures the scaling behavior of the target in both Up and Down directions
+	// (scaleUp and scaleDown fields respectively).
+	// +optional
+	Behavior *autoscalingv2.HorizontalPodAutoscalerBehavior `json:"behavior,omitempty"`
+}
+
+// KEDAScalingSpec configures the KEDA ScaledObject for autoscaling.
+// The fields are directly from the upstream KEDA ScaledObject API.
+// +kubebuilder:validation:XValidation:rule="!has(self.advanced) || (size(self.advanced.scalingModifiers.formula) == 0 && size(self.advanced.scalingModifiers.target) == 0 && size(self.advanced.scalingModifiers.activationTarget) == 0 && size(self.advanced.scalingModifiers.metricType) == 0)",message="scalingModifiers must not be set; WVA controls the scaling metric formula and logic"
+// +kubebuilder:validation:XValidation:rule="!has(self.advanced) || !has(self.advanced.horizontalPodAutoscalerConfig) || size(self.advanced.horizontalPodAutoscalerConfig.name) == 0",message="horizontalPodAutoscalerConfig.name must not be set; the controller manages the HPA name"
+type KEDAScalingSpec struct {
+	// PollingInterval is the interval in seconds to check each trigger on.
+	// Must be at least 1 second.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	PollingInterval *int32 `json:"pollingInterval,omitempty"`
+
+	// CooldownPeriod is the period in seconds to wait after the last trigger reported active
+	// before scaling the resource back to its minimum replica count.
+	// A value of 0 means scale down immediately with no cooldown.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	CooldownPeriod *int32 `json:"cooldownPeriod,omitempty"`
+
+	// InitialCooldownPeriod is the period in seconds to wait after the ScaledObject is created
+	// before KEDA starts evaluating triggers. Useful for LLM deployments where the model
+	// takes time to load before it can serve traffic, preventing premature scale-up decisions.
+	// +optional
+	// +kubebuilder:validation:Minimum=0
+	InitialCooldownPeriod *int32 `json:"initialCooldownPeriod,omitempty"`
+
+	// IdleReplicaCount is the number of replicas KEDA will scale the resource down to
+	// when there are no triggers active. This must be less than minReplicas.
+	// If not set, KEDA will not scale below minReplicas.
+	// +optional
+	// +kubebuilder:validation:Minimum=1
+	IdleReplicaCount *int32 `json:"idleReplicaCount,omitempty"`
+
+	// Fallback defines the replica count to maintain when the scaler is in a fallback state
+	// (e.g., when Prometheus or WVA metrics are unavailable). This allows the deployment to
+	// hold a safe replica count during metric outages rather than scaling to zero.
+	// +optional
+	Fallback *kedav1alpha1.Fallback `json:"fallback,omitempty"`
+
+	// Advanced specifies the advanced KEDA configuration options.
+	// This includes HPA behavior configuration and restore-to-original replica count settings.
+	// +optional
+	Advanced *kedav1alpha1.AdvancedConfig `json:"advanced,omitempty"`
+}
+
 // ParallelismSpec defines the parallelism parameters for distributed inference.
 type ParallelismSpec struct {
 	// Tensor parallelism size.
 	// +optional
+	// +kubebuilder:validation:Minimum=1
 	Tensor *int32 `json:"tensor,omitempty"`
 	// Pipeline parallelism size.
 	// +optional
+	// +kubebuilder:validation:Minimum=1
 	Pipeline *int32 `json:"pipeline,omitempty"`
 	// Data parallelism size.
 	// +optional
+	// +kubebuilder:validation:Minimum=1
 	Data *int32 `json:"data,omitempty"`
 	// DataLocal data local parallelism size.
 	// +optional
+	// +kubebuilder:validation:Minimum=1
 	DataLocal *int32 `json:"dataLocal,omitempty"`
 	// DataRPCPort is the data parallelism RPC port.
 	// +optional
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
 	DataRPCPort *int32 `json:"dataRPCPort,omitempty"`
 	// Expert enables expert parallelism.
 	// +optional

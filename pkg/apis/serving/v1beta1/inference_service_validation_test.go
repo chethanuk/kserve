@@ -169,7 +169,7 @@ func TestAutoscalerClassHPA(t *testing.T) {
 										Resource: &ResourceMetricSource{
 											Name: ResourceMetricMemory,
 											Target: MetricTarget{
-												AverageValue: ptr.To(resource.MustParse("1Gi")),
+												AverageValue: NewMetricQuantity("1Gi"),
 											},
 										},
 									},
@@ -437,7 +437,7 @@ func TestAutoscalerClassKEDA(t *testing.T) {
 											Name: ResourceMetricMemory,
 											Target: MetricTarget{
 												Type:         AverageValueMetricType,
-												AverageValue: ptr.To(resource.MustParse("1Gi")),
+												AverageValue: NewMetricQuantity("1Gi"),
 											},
 										},
 									},
@@ -511,7 +511,7 @@ func TestAutoscalerClassKEDA(t *testing.T) {
 											},
 											Target: MetricTarget{
 												Type:  ValueMetricType,
-												Value: ptr.To(resource.MustParse("10")),
+												Value: NewMetricQuantity("10"),
 											},
 										},
 									},
@@ -553,7 +553,7 @@ func TestAutoscalerClassKEDA(t *testing.T) {
 											},
 											Target: MetricTarget{
 												Type:  ValueMetricType,
-												Value: ptr.To(resource.MustParse("10")),
+												Value: NewMetricQuantity("10"),
 											},
 										},
 									},
@@ -1419,6 +1419,19 @@ func TestDeploymentModeUpdate(t *testing.T) {
 	// Annotation matches status, update is accepted
 	g.Expect(warnings).Should(gomega.BeEmpty())
 	g.Expect(err).Should(gomega.Succeed())
+
+	// Test: Mismatched deploymentMode should be allowed during deletion (DeletionTimestamp set)
+	// This allows finalizer cleanup when annotation differs from status
+	deletingIsvc := oldIsvc.DeepCopy()
+	deletingIsvc.Annotations = map[string]string{
+		constants.DeploymentMode: string(constants.Standard), // Mismatches status (Knative)
+	}
+	now := metav1.Now()
+	deletingIsvc.DeletionTimestamp = &now
+	warnings, err = validator.ValidateUpdate(t.Context(), &oldIsvc, deletingIsvc)
+	// During deletion, deploymentMode mismatch should be allowed
+	g.Expect(warnings).Should(gomega.BeEmpty())
+	g.Expect(err).Should(gomega.Succeed())
 }
 
 func TestValidateDelete(t *testing.T) {
@@ -1469,7 +1482,7 @@ func TestValidateScalingKedaCompExtension(t *testing.T) {
 						Name: ResourceMetricMemory,
 						Target: MetricTarget{
 							Type:         AverageValueMetricType,
-							AverageValue: ptr.To(resource.MustParse("2Gi")),
+							AverageValue: NewMetricQuantity("2Gi"),
 						},
 					},
 				},
@@ -1527,7 +1540,7 @@ func TestValidateScalingKedaCompExtension(t *testing.T) {
 						Name: ResourceMetricMemory,
 						Target: MetricTarget{
 							Type:         AverageValueMetricType,
-							AverageValue: ptr.To(resource.MustParse("512Ki")),
+							AverageValue: NewMetricQuantity("512Ki"),
 						},
 					},
 				},
@@ -1580,7 +1593,7 @@ func TestValidateScalingKedaCompExtension(t *testing.T) {
 						},
 						Target: MetricTarget{
 							Type:  ValueMetricType,
-							Value: ptr.To(resource.MustParse("10")),
+							Value: NewMetricQuantity("10"),
 						},
 					},
 				},
@@ -1618,7 +1631,7 @@ func TestValidateScalingKedaCompExtension(t *testing.T) {
 						},
 						Target: MetricTarget{
 							Type:  ValueMetricType,
-							Value: ptr.To(resource.MustParse("5")),
+							Value: NewMetricQuantity("5"),
 						},
 					},
 				},
@@ -1669,4 +1682,131 @@ func TestValidateScalingKedaCompExtension(t *testing.T) {
 
 func intPtr(i int) *int {
 	return &i
+}
+
+func TestValidateStorageUriSpec(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+
+	scenarios := map[string]struct {
+		storageUri *StorageUri
+		expected   gomega.OmegaMatcher
+	}{
+		"ValidStorageUriSpec": {
+			storageUri: &StorageUri{
+				Uri:       "gs://bucket/model",
+				MountPath: "/mnt/models",
+			},
+			expected: gomega.BeNil(),
+		},
+		"ValidStorageUriSpecWithRootPath": {
+			storageUri: &StorageUri{
+				Uri:       "s3://bucket/model",
+				MountPath: "/",
+			},
+			expected: gomega.MatchError("storage path cannot be empty"),
+		},
+		"EmptyUri": {
+			storageUri: &StorageUri{
+				Uri:       "",
+				MountPath: "/mnt/models",
+			},
+			expected: gomega.MatchError("storage URI cannot be empty"),
+		},
+		"RelativePath": {
+			storageUri: &StorageUri{
+				Uri:       "gs://bucket/model",
+				MountPath: "mnt/models",
+			},
+			expected: gomega.MatchError("storage path must be absolute: mnt/models"),
+		},
+	}
+
+	for name, scenario := range scenarios {
+		t.Run(name, func(t *testing.T) {
+			err := validateStorageURISpec(scenario.storageUri)
+			g.Expect(err).To(scenario.expected)
+		})
+	}
+}
+
+func TestValidateStorageUri(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+
+	scenarios := map[string]struct {
+		storageUris []StorageUri
+		expected    gomega.OmegaMatcher
+	}{
+		"EmptyList": {
+			storageUris: []StorageUri{},
+			expected:    gomega.BeNil(),
+		},
+		"SingleValidStorageUri": {
+			storageUris: []StorageUri{
+				{
+					Uri:       "gs://bucket/model1",
+					MountPath: "/mnt/models",
+				},
+			},
+			expected: gomega.BeNil(),
+		},
+		"MultipleValidStorageUrisWithCommonParent": {
+			storageUris: []StorageUri{
+				{
+					Uri:       "gs://bucket/model1",
+					MountPath: "/mnt/models/model1",
+				},
+				{
+					Uri:       "s3://bucket/model2",
+					MountPath: "/mnt/models/model2",
+				},
+			},
+			expected: gomega.BeNil(),
+		},
+		"MultipleStorageUrisWithoutCommonParent": {
+			storageUris: []StorageUri{
+				{
+					Uri:       "gs://bucket/model1",
+					MountPath: "/mnt/models",
+				},
+				{
+					Uri:       "s3://bucket/model2",
+					MountPath: "/opt/models",
+				},
+			},
+			expected: gomega.MatchError(gomega.ContainSubstring("storage paths must have a common parent directory")),
+		},
+		"InvalidStorageUriInList": {
+			storageUris: []StorageUri{
+				{
+					Uri:       "gs://bucket/model1",
+					MountPath: "/mnt/models",
+				},
+				{
+					Uri:       "",
+					MountPath: "/mnt/models/model2",
+				},
+			},
+			expected: gomega.MatchError("storage URI cannot be empty"),
+		},
+		"RelativePathInList": {
+			storageUris: []StorageUri{
+				{
+					Uri:       "gs://bucket/model1",
+					MountPath: "/mnt/models",
+				},
+				{
+					Uri:       "s3://bucket/model2",
+					MountPath: "mnt/models/model2",
+				},
+			},
+			expected: gomega.MatchError("storage path must be absolute: mnt/models/model2"),
+		},
+	}
+
+	for name, scenario := range scenarios {
+		t.Run(name, func(t *testing.T) {
+			err := validateMultipleStorageURIsSpec(scenario.storageUris)
+			g.Expect(err).To(scenario.expected)
+		})
+	}
 }
