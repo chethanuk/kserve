@@ -43,6 +43,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				a.Protocol = "TCP"
 			}
 		}
+		for i := range in.Spec.Predictor.SKLearn.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.SKLearn.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if in.Spec.Predictor.SKLearn.PredictorExtensionSpec.Container.LivenessProbe != nil {
 			if in.Spec.Predictor.SKLearn.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC != nil {
 				if in.Spec.Predictor.SKLearn.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -73,6 +84,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 			a := &in.Spec.Predictor.XGBoost.PredictorExtensionSpec.Container.Ports[i]
 			if a.Protocol == "" {
 				a.Protocol = "TCP"
+			}
+		}
+		for i := range in.Spec.Predictor.XGBoost.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.XGBoost.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
 			}
 		}
 		if in.Spec.Predictor.XGBoost.PredictorExtensionSpec.Container.LivenessProbe != nil {
@@ -139,6 +161,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				a.Protocol = "TCP"
 			}
 		}
+		for i := range in.Spec.Predictor.Tensorflow.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.Tensorflow.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if in.Spec.Predictor.Tensorflow.PredictorExtensionSpec.Container.LivenessProbe != nil {
 			if in.Spec.Predictor.Tensorflow.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC != nil {
 				if in.Spec.Predictor.Tensorflow.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -169,6 +202,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 			a := &in.Spec.Predictor.PyTorch.PredictorExtensionSpec.Container.Ports[i]
 			if a.Protocol == "" {
 				a.Protocol = "TCP"
+			}
+		}
+		for i := range in.Spec.Predictor.PyTorch.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.PyTorch.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
 			}
 		}
 		if in.Spec.Predictor.PyTorch.PredictorExtensionSpec.Container.LivenessProbe != nil {
@@ -203,6 +247,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				a.Protocol = "TCP"
 			}
 		}
+		for i := range in.Spec.Predictor.Triton.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.Triton.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if in.Spec.Predictor.Triton.PredictorExtensionSpec.Container.LivenessProbe != nil {
 			if in.Spec.Predictor.Triton.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC != nil {
 				if in.Spec.Predictor.Triton.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -233,6 +288,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 			a := &in.Spec.Predictor.ONNX.PredictorExtensionSpec.Container.Ports[i]
 			if a.Protocol == "" {
 				a.Protocol = "TCP"
+			}
+		}
+		for i := range in.Spec.Predictor.ONNX.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.ONNX.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
 			}
 		}
 		if in.Spec.Predictor.ONNX.PredictorExtensionSpec.Container.LivenessProbe != nil {
@@ -267,6 +333,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				a.Protocol = "TCP"
 			}
 		}
+		for i := range in.Spec.Predictor.HuggingFace.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.HuggingFace.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if in.Spec.Predictor.HuggingFace.PredictorExtensionSpec.Container.LivenessProbe != nil {
 			if in.Spec.Predictor.HuggingFace.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC != nil {
 				if in.Spec.Predictor.HuggingFace.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -297,6 +374,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 			a := &in.Spec.Predictor.PMML.PredictorExtensionSpec.Container.Ports[i]
 			if a.Protocol == "" {
 				a.Protocol = "TCP"
+			}
+		}
+		for i := range in.Spec.Predictor.PMML.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.PMML.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
 			}
 		}
 		if in.Spec.Predictor.PMML.PredictorExtensionSpec.Container.LivenessProbe != nil {
@@ -331,6 +419,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				a.Protocol = "TCP"
 			}
 		}
+		for i := range in.Spec.Predictor.LightGBM.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.LightGBM.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if in.Spec.Predictor.LightGBM.PredictorExtensionSpec.Container.LivenessProbe != nil {
 			if in.Spec.Predictor.LightGBM.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC != nil {
 				if in.Spec.Predictor.LightGBM.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -363,6 +462,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				a.Protocol = "TCP"
 			}
 		}
+		for i := range in.Spec.Predictor.Paddle.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.Paddle.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if in.Spec.Predictor.Paddle.PredictorExtensionSpec.Container.LivenessProbe != nil {
 			if in.Spec.Predictor.Paddle.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC != nil {
 				if in.Spec.Predictor.Paddle.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -393,6 +503,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 			a := &in.Spec.Predictor.Model.PredictorExtensionSpec.Container.Ports[i]
 			if a.Protocol == "" {
 				a.Protocol = "TCP"
+			}
+		}
+		for i := range in.Spec.Predictor.Model.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.Model.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
 			}
 		}
 		if in.Spec.Predictor.Model.PredictorExtensionSpec.Container.LivenessProbe != nil {
@@ -474,6 +595,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 					b.Protocol = "TCP"
 				}
 			}
+			for j := range a.Env {
+				b := &a.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
+				}
+			}
 			if a.LivenessProbe != nil {
 				if a.LivenessProbe.ProbeHandler.GRPC != nil {
 					if a.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -507,6 +639,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 					b.Protocol = "TCP"
 				}
 			}
+			for j := range a.Env {
+				b := &a.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
+				}
+			}
 			if a.LivenessProbe != nil {
 				if a.LivenessProbe.ProbeHandler.GRPC != nil {
 					if a.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -538,6 +681,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				b := &a.EphemeralContainerCommon.Ports[j]
 				if b.Protocol == "" {
 					b.Protocol = "TCP"
+				}
+			}
+			for j := range a.EphemeralContainerCommon.Env {
+				b := &a.EphemeralContainerCommon.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
 				}
 			}
 			if a.EphemeralContainerCommon.LivenessProbe != nil {
@@ -619,6 +773,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				b.Protocol = "TCP"
 			}
 		}
+		for j := range a.Env {
+			b := &a.Env[j]
+			if b.ValueFrom != nil {
+				if b.ValueFrom.FileKeyRef != nil {
+					if b.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if a.LivenessProbe != nil {
 			if a.LivenessProbe.ProbeHandler.GRPC != nil {
 				if a.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -650,6 +815,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 			b := &a.Ports[j]
 			if b.Protocol == "" {
 				b.Protocol = "TCP"
+			}
+		}
+		for j := range a.Env {
+			b := &a.Env[j]
+			if b.ValueFrom != nil {
+				if b.ValueFrom.FileKeyRef != nil {
+					if b.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
 			}
 		}
 		if a.LivenessProbe != nil {
@@ -685,6 +861,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				b.Protocol = "TCP"
 			}
 		}
+		for j := range a.EphemeralContainerCommon.Env {
+			b := &a.EphemeralContainerCommon.Env[j]
+			if b.ValueFrom != nil {
+				if b.ValueFrom.FileKeyRef != nil {
+					if b.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if a.EphemeralContainerCommon.LivenessProbe != nil {
 			if a.EphemeralContainerCommon.LivenessProbe.ProbeHandler.GRPC != nil {
 				if a.EphemeralContainerCommon.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -716,6 +903,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				a := &in.Spec.Explainer.ART.ExplainerExtensionSpec.Container.Ports[i]
 				if a.Protocol == "" {
 					a.Protocol = "TCP"
+				}
+			}
+			for i := range in.Spec.Explainer.ART.ExplainerExtensionSpec.Container.Env {
+				a := &in.Spec.Explainer.ART.ExplainerExtensionSpec.Container.Env[i]
+				if a.ValueFrom != nil {
+					if a.ValueFrom.FileKeyRef != nil {
+						if a.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
 				}
 			}
 			if in.Spec.Explainer.ART.ExplainerExtensionSpec.Container.LivenessProbe != nil {
@@ -796,6 +994,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 					b.Protocol = "TCP"
 				}
 			}
+			for j := range a.Env {
+				b := &a.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
+				}
+			}
 			if a.LivenessProbe != nil {
 				if a.LivenessProbe.ProbeHandler.GRPC != nil {
 					if a.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -829,6 +1038,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 					b.Protocol = "TCP"
 				}
 			}
+			for j := range a.Env {
+				b := &a.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
+				}
+			}
 			if a.LivenessProbe != nil {
 				if a.LivenessProbe.ProbeHandler.GRPC != nil {
 					if a.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -860,6 +1080,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				b := &a.EphemeralContainerCommon.Ports[j]
 				if b.Protocol == "" {
 					b.Protocol = "TCP"
+				}
+			}
+			for j := range a.EphemeralContainerCommon.Env {
+				b := &a.EphemeralContainerCommon.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
 				}
 			}
 			if a.EphemeralContainerCommon.LivenessProbe != nil {
@@ -942,6 +1173,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 					b.Protocol = "TCP"
 				}
 			}
+			for j := range a.Env {
+				b := &a.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
+				}
+			}
 			if a.LivenessProbe != nil {
 				if a.LivenessProbe.ProbeHandler.GRPC != nil {
 					if a.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -975,6 +1217,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 					b.Protocol = "TCP"
 				}
 			}
+			for j := range a.Env {
+				b := &a.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
+				}
+			}
 			if a.LivenessProbe != nil {
 				if a.LivenessProbe.ProbeHandler.GRPC != nil {
 					if a.LivenessProbe.ProbeHandler.GRPC.Service == nil {
@@ -1006,6 +1259,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				b := &a.EphemeralContainerCommon.Ports[j]
 				if b.Protocol == "" {
 					b.Protocol = "TCP"
+				}
+			}
+			for j := range a.EphemeralContainerCommon.Env {
+				b := &a.EphemeralContainerCommon.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
 				}
 			}
 			if a.EphemeralContainerCommon.LivenessProbe != nil {

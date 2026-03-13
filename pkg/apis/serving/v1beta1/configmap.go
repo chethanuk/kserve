@@ -129,7 +129,25 @@ type IngressConfig struct {
 
 // +kubebuilder:object:generate=false
 type DeployConfig struct {
-	DefaultDeploymentMode string `json:"defaultDeploymentMode,omitempty"`
+	DefaultDeploymentMode     string                     `json:"defaultDeploymentMode,omitempty"`
+	DeploymentRolloutStrategy *DeploymentRolloutStrategy `json:"deploymentRolloutStrategy,omitempty"`
+}
+
+// DeploymentRolloutStrategy defines the rollout strategy configuration for deployments
+type DeploymentRolloutStrategy struct {
+	// DefaultRollout specifies the default rollout configuration
+	// +optional
+	DefaultRollout *RolloutSpec `json:"defaultRollout,omitempty"`
+}
+
+// RolloutSpec defines the rollout strategy configuration using Kubernetes deployment strategy
+type RolloutSpec struct {
+	// MaxSurge specifies the maximum number of pods that can be created above the desired replica count.
+	// Can be an absolute number (ex: 5) or a percentage of desired pods (ex: 10%).
+	MaxSurge string `json:"maxSurge"`
+	// MaxUnavailable specifies the maximum number of pods that can be unavailable during the update.
+	// Can be an absolute number (ex: 5) or a percentage of desired pods (ex: 10%).
+	MaxUnavailable string `json:"maxUnavailable"`
 }
 
 // +kubebuilder:object:generate=false
@@ -243,7 +261,7 @@ func NewMultiNodeConfig(isvcConfigMap *corev1.ConfigMap) (*MultiNodeConfig, erro
 	}
 
 	// update global GPU resource type list
-	utils.UpdateGlobalGPUResourceTypeList(append(mncfg.CustomGPUResourceTypeList, constants.DefaultGPUResourceTypeList...))
+	_ = utils.UpdateGlobalGPUResourceTypeList(append(mncfg.CustomGPUResourceTypeList, constants.DefaultGPUResourceTypeList...))
 	return mncfg, nil
 }
 
@@ -414,13 +432,20 @@ func GetStorageInitializerConfigs(configMap *corev1.ConfigMap) (*types.StorageIn
 	}
 	// Ensure that we set proper values for CPU/Memory Limit/Request
 	resourceDefaults := map[string]string{
-		"memoryRequest":  storageInitializerConfig.MemoryRequest,
-		"memoryLimit":    storageInitializerConfig.MemoryLimit,
-		"cpuRequest":     storageInitializerConfig.CpuRequest,
-		"cpuLimit":       storageInitializerConfig.CpuLimit,
-		"cpuModelcar":    storageInitializerConfig.CpuModelcar,
-		"memoryModelcar": storageInitializerConfig.MemoryModelcar,
+		"memoryRequest": storageInitializerConfig.MemoryRequest,
+		"memoryLimit":   storageInitializerConfig.MemoryLimit,
+		"cpuRequest":    storageInitializerConfig.CpuRequest,
+		"cpuLimit":      storageInitializerConfig.CpuLimit,
 	}
+
+	// Only validate optional modelcar fields if they're set
+	if storageInitializerConfig.CpuModelcar != "" {
+		resourceDefaults["cpuModelcar"] = storageInitializerConfig.CpuModelcar
+	}
+	if storageInitializerConfig.MemoryModelcar != "" {
+		resourceDefaults["memoryModelcar"] = storageInitializerConfig.MemoryModelcar
+	}
+
 	for key, value := range resourceDefaults {
 		_, err := resource.ParseQuantity(value)
 		if err != nil {
