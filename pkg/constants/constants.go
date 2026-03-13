@@ -554,6 +554,7 @@ const (
 	MLServer          = "kserve-mlserver"
 	TFServing         = "kserve-tensorflow-serving"
 	XGBServer         = "kserve-xgbserver"
+	CatBoostServer    = "kserve-catboostserver"
 	TorchServe        = "kserve-torchserve"
 	TritonServer      = "kserve-tritonserver"
 	PMMLServer        = "kserve-pmmlserver"
