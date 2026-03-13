@@ -32,16 +32,14 @@ COPY storage storage
 RUN cd storage && uv pip install . --no-cache
 
 # Copy and install dependencies for catboostserver using uv
-COPY catboostserver/pyproject.toml catboostserver/
-RUN cd catboostserver && uv pip install catboost~=1.2.7 --no-cache
+COPY catboostserver/pyproject.toml catboostserver/uv.lock catboostserver/
+RUN cd catboostserver && uv sync --active --no-cache
 COPY catboostserver catboostserver
-RUN cd catboostserver && uv pip install . --no-cache
+RUN cd catboostserver && uv sync --active --no-cache
 
 # Generate third-party licenses
 COPY pyproject.toml pyproject.toml
 COPY third_party/pip-licenses.py pip-licenses.py
-# TODO: Remove this when upgrading to python 3.11+
-RUN pip install --no-cache-dir tomli
 RUN mkdir -p third_party/library && python3 pip-licenses.py
 
 # ---------- Production Image ----------
