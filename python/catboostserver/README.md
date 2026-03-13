@@ -10,10 +10,12 @@ python -m catboostserver --model_dir /path/to/model_dir --model_name catboost-mo
 
 ## Development
 
-Install the development dependencies with:
-
 ```bash
-pip install -e .[test]
+# Setup virtualenv
+uv venv
+
+# Run the server locally
+uv run python -m catboostserver --model_dir /path/to/model_dir --model_name catboost-model
 ```
 
 To run tests:
@@ -24,7 +26,7 @@ python -m pytest
 
 To run static type checks:
 
-```bash  
+```bash
 python -m mypy --ignore-missing-imports catboostserver
 ```
 
