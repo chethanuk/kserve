@@ -44,7 +44,7 @@ async def test_catboost_kserve(rest_v1_client):
     predictor_spec = V1beta1PredictorSpec(
         min_replicas=1,
         catboost=V1beta1CatBoostSpec(
-            storage_uri="https://raw.githubusercontent.com/chethanuk/kserve/catboost-serving/python/catboostserver/example_model/model/model.cbm",
+            storage_uri="https://raw.githubusercontent.com/chethanuk/kserve/72f5b9f413b987bdcfa76c7fdaa467bb01b8f80e/python/catboostserver/example_model/model/model.cbm",
             protocol_version=protocol_version,
             resources=client.V1ResourceRequirements(
                 requests={"cpu": "50m", "memory": "256Mi"},
@@ -65,26 +65,27 @@ async def test_catboost_kserve(rest_v1_client):
     kserve_client = KServeClient(
         config_file=os.environ.get("KUBECONFIG", "~/.kube/config")
     )
-    kserve_client.create(isvc)
-    kserve_client.wait_isvc_ready(
-        service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
-    )
+    try:
+        kserve_client.create(isvc)
+        kserve_client.wait_isvc_ready(
+            service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
+        )
 
-    res = await predict_isvc(
-        rest_v1_client,
-        service_name,
-        {
-            "instances": [
-                [6.8, 2.8, 4.8, 1.4],
-                [6.0, 3.4, 4.5, 1.6],
-            ]
-        },
-    )
+        res = await predict_isvc(
+            rest_v1_client,
+            service_name,
+            {
+                "instances": [
+                    [6.8, 2.8, 4.8, 1.4],
+                    [6.0, 3.4, 4.5, 1.6],
+                ]
+            },
+        )
 
-    assert isinstance(res, dict)
-    assert res["predictions"] is not None
-
-    kserve_client.delete(service_name, KSERVE_TEST_NAMESPACE)
+        assert isinstance(res, dict)
+        assert res["predictions"] is not None
+    finally:
+        kserve_client.delete(service_name, KSERVE_TEST_NAMESPACE)
 
 
 @pytest.mark.predictor
@@ -101,7 +102,7 @@ async def test_catboost_runtime_kserve(rest_v1_client):
                 name="catboost",
             ),
             runtime="kserve-catboostserver",
-            storage_uri="https://raw.githubusercontent.com/chethanuk/kserve/catboost-serving/python/catboostserver/example_model/model/model.cbm",
+            storage_uri="https://raw.githubusercontent.com/chethanuk/kserve/72f5b9f413b987bdcfa76c7fdaa467bb01b8f80e/python/catboostserver/example_model/model/model.cbm",
             protocol_version=protocol_version,
             resources=client.V1ResourceRequirements(
                 requests={"cpu": "50m", "memory": "256Mi"},
@@ -122,23 +123,24 @@ async def test_catboost_runtime_kserve(rest_v1_client):
     kserve_client = KServeClient(
         config_file=os.environ.get("KUBECONFIG", "~/.kube/config")
     )
-    kserve_client.create(isvc)
-    kserve_client.wait_isvc_ready(
-        service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
-    )
+    try:
+        kserve_client.create(isvc)
+        kserve_client.wait_isvc_ready(
+            service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
+        )
 
-    res = await predict_isvc(
-        rest_v1_client,
-        service_name,
-        {
-            "instances": [
-                [6.8, 2.8, 4.8, 1.4],
-                [6.0, 3.4, 4.5, 1.6],
-            ]
-        },
-    )
+        res = await predict_isvc(
+            rest_v1_client,
+            service_name,
+            {
+                "instances": [
+                    [6.8, 2.8, 4.8, 1.4],
+                    [6.0, 3.4, 4.5, 1.6],
+                ]
+            },
+        )
 
-    assert isinstance(res, dict)
-    assert res["predictions"] is not None
-
-    kserve_client.delete(service_name, KSERVE_TEST_NAMESPACE)
+        assert isinstance(res, dict)
+        assert res["predictions"] is not None
+    finally:
+        kserve_client.delete(service_name, KSERVE_TEST_NAMESPACE)

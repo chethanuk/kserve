@@ -1,5 +1,5 @@
 kserve:
-  version: v0.17.0
+  version: &defaultVersion v0.17.0
   createSharedResources: true
   inferenceServiceConfig:
     enabled: ''

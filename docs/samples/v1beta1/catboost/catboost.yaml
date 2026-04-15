@@ -5,4 +5,4 @@ metadata:
 spec:
   predictor:
     catboost:
-      storageUri: "https://raw.githubusercontent.com/chethanuk/kserve/catboost-serving/python/catboostserver/example_model/model/model.cbm"
+      storageUri: "https://raw.githubusercontent.com/chethanuk/kserve/72f5b9f413b987bdcfa76c7fdaa467bb01b8f80e/python/catboostserver/example_model/model/model.cbm"

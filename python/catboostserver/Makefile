@@ -1,3 +1,5 @@
+.PHONY: dev_install install_dependencies test type_check fmt lint
+
 dev_install:
 	uv sync --group test
 

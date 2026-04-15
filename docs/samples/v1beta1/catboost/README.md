@@ -9,7 +9,7 @@ This example shows how to deploy a CatBoost model using KServe.
 
 ## Create the InferenceService
 
-Apply the CRD. The sample `storageUri` points at the example model committed in `chethanuk/kserve`:
+Apply the CRD. The sample `storageUri` points at an immutable commit-hosted example model artifact:
 
 ```bash
 kubectl apply -f catboost.yaml
@@ -17,7 +17,7 @@ kubectl apply -f catboost.yaml
 
 Expected Output:
 
-```
+```text
 inferenceservice.serving.kserve.io/catboost-iris created
 ```
 
