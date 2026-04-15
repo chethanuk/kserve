@@ -129,6 +129,17 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				a.Protocol = "TCP"
 			}
 		}
+		for i := range in.Spec.Predictor.CatBoost.PredictorExtensionSpec.Container.Env {
+			a := &in.Spec.Predictor.CatBoost.PredictorExtensionSpec.Container.Env[i]
+			if a.ValueFrom != nil {
+				if a.ValueFrom.FileKeyRef != nil {
+					if a.ValueFrom.FileKeyRef.Optional == nil {
+						var ptrVar1 bool = false
+						a.ValueFrom.FileKeyRef.Optional = &ptrVar1
+					}
+				}
+			}
+		}
 		if in.Spec.Predictor.CatBoost.PredictorExtensionSpec.Container.LivenessProbe != nil {
 			if in.Spec.Predictor.CatBoost.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC != nil {
 				if in.Spec.Predictor.CatBoost.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service == nil {

@@ -33,7 +33,7 @@ var _ ComponentImplementation = &CatBoostSpec{}
 
 // Default sets defaults on the resource
 func (c *CatBoostSpec) Default(config *InferenceServicesConfig) {
-	c.Container.Name = constants.InferenceServiceContainerName
+	c.Name = constants.InferenceServiceContainerName
 
 	if c.ProtocolVersion == nil {
 		defaultProtocol := constants.ProtocolV1
