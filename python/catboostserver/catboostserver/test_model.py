@@ -35,7 +35,7 @@ def test_cbm_model():
 
 
 def test_model_formats():
-    """Test that model supports both .cbm and .bin formats"""
+    """Test that model supports the CatBoost .cbm format"""
     # The example model is .cbm format, test it works
     catboost_model = CatBoostModel("test-model", example_model_dir)
     catboost_model.load()

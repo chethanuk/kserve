@@ -44,7 +44,7 @@ async def test_catboost_kserve():
     predictor_spec = V1beta1PredictorSpec(
         min_replicas=1,
         catboost=V1beta1CatBoostSpec(
-            storage_uri="gs://kfserving-examples/models/catboost/iris",
+            storage_uri="https://raw.githubusercontent.com/chethanuk/kserve/catboost-serving/python/catboostserver/example_model/model/model.cbm",
             protocol_version=protocol_version,
             resources=client.V1ResourceRequirements(
                 requests={"cpu": "50m", "memory": "256Mi"},
@@ -62,9 +62,13 @@ async def test_catboost_kserve():
         spec=V1beta1InferenceServiceSpec(predictor=predictor_spec),
     )
 
-    kserve_client = KServeClient(config_file=os.environ.get("KUBECONFIG", "~/.kube/config"))
+    kserve_client = KServeClient(
+        config_file=os.environ.get("KUBECONFIG", "~/.kube/config")
+    )
     kserve_client.create(isvc)
-    kserve_client.wait_isvc_ready(service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720)
+    kserve_client.wait_isvc_ready(
+        service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
+    )
 
     res = await predict_isvc(
         service_name=service_name,
@@ -95,7 +99,7 @@ async def test_catboost_runtime_kserve():
                 name="catboost",
             ),
             runtime="kserve-catboostserver",
-            storage_uri="gs://kfserving-examples/models/catboost/iris",
+            storage_uri="https://raw.githubusercontent.com/chethanuk/kserve/catboost-serving/python/catboostserver/example_model/model/model.cbm",
             protocol_version=protocol_version,
             resources=client.V1ResourceRequirements(
                 requests={"cpu": "50m", "memory": "256Mi"},
@@ -113,9 +117,13 @@ async def test_catboost_runtime_kserve():
         spec=V1beta1InferenceServiceSpec(predictor=predictor_spec),
     )
 
-    kserve_client = KServeClient(config_file=os.environ.get("KUBECONFIG", "~/.kube/config"))
+    kserve_client = KServeClient(
+        config_file=os.environ.get("KUBECONFIG", "~/.kube/config")
+    )
     kserve_client.create(isvc)
-    kserve_client.wait_isvc_ready(service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720)
+    kserve_client.wait_isvc_ready(
+        service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
+    )
 
     res = await predict_isvc(
         service_name=service_name,

@@ -5,11 +5,11 @@ This example shows how to deploy a CatBoost model using KServe.
 ## Prerequisites
 
 1. Your cluster has KServe installed
-2. Your model is saved in CatBoost format (.cbm or .bin)
+2. Your model is saved in CatBoost `.cbm` format
 
 ## Create the InferenceService
 
-Apply the CRD:
+Apply the CRD. The sample `storageUri` points at the example model committed in `chethanuk/kserve`:
 
 ```bash
 kubectl apply -f catboost.yaml
