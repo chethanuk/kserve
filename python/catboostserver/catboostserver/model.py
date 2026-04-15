@@ -13,10 +13,11 @@
 # limitations under the License.
 
 import os
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import catboost as cb
 from kserve.errors import InferenceError, ModelMissingError
+from kserve.logging import logger
 from kserve.protocol.infer_type import InferRequest, InferResponse
 from kserve.utils.utils import get_predict_input, get_predict_response
 
@@ -38,15 +39,21 @@ class CatBoostModel(Model):
     def load(self) -> bool:
         model_path = Storage.download(self.model_dir)
         model_files = []
-        for file in os.listdir(model_path):
-            file_path = os.path.join(model_path, file)
-            if os.path.isfile(file_path) and file.endswith(MODEL_EXTENSIONS):
-                model_files.append(file_path)
+        if os.path.isdir(model_path):
+            for file in os.listdir(model_path):
+                file_path = os.path.join(model_path, file)
+                if os.path.isfile(file_path) and file.endswith(MODEL_EXTENSIONS):
+                    model_files.append(file_path)
+        elif os.path.isfile(model_path) and model_path.endswith(MODEL_EXTENSIONS):
+            model_files.append(model_path)
+
         if len(model_files) == 0:
             raise ModelMissingError(model_path)
-
-        if len(model_files) > 1:
-            model_files = [model_files[0]]
+        elif len(model_files) > 1:
+            raise RuntimeError(
+                "More than one model file is detected, "
+                f"Only one is allowed within model_dir: {model_files}"
+            )
 
         self._model = cb.CatBoost()
         self._model.load_model(model_files[0])
@@ -54,11 +61,14 @@ class CatBoostModel(Model):
         return self.ready
 
     def predict(
-        self, payload: Union[Dict, InferRequest], headers: Dict[str, str] = None
+        self,
+        payload: Union[Dict, InferRequest],
+        headers: Optional[Dict[str, str]] = None,
     ) -> Union[Dict, InferResponse]:
         try:
             instances = get_predict_input(payload)
             result = self._model.predict(instances)
             return get_predict_response(payload, result, self.name)
         except Exception as e:
-            raise InferenceError(str(e))
+            logger.exception("Failed to predict")
+            raise InferenceError(str(e)) from e

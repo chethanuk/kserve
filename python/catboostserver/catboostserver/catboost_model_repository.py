@@ -21,7 +21,8 @@ from catboostserver import CatBoostModel
 class CatBoostModelRepository(ModelRepository):
     def __init__(self, model_dir: str = MODEL_MOUNT_DIRS):
         super().__init__(model_dir)
-        self.load_models()
+        if os.path.isdir(self.models_dir):
+            self.load_models()
 
     async def load(self, name: str) -> bool:
         return self.load_model(name)

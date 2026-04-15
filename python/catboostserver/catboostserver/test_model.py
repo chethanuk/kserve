@@ -13,6 +13,11 @@
 # limitations under the License.
 
 import os
+import shutil
+import tempfile
+
+import pytest
+
 from catboostserver import CatBoostModel
 
 # Use example model following KServe pattern
@@ -42,3 +47,24 @@ def test_model_formats():
 
     assert catboost_model.ready
     assert catboost_model._model is not None
+
+
+def test_load_supports_direct_model_file_path():
+    direct_model_path = os.path.join(example_model_dir, "model.cbm")
+
+    catboost_model = CatBoostModel("test-model", direct_model_path)
+    catboost_model.load()
+
+    assert catboost_model.ready
+
+
+def test_load_fails_when_multiple_cbm_files_present():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        src_model = os.path.join(example_model_dir, "model.cbm")
+        shutil.copy(src_model, os.path.join(temp_dir, "model-a.cbm"))
+        shutil.copy(src_model, os.path.join(temp_dir, "model-b.cbm"))
+
+        catboost_model = CatBoostModel("test-model", temp_dir)
+
+        with pytest.raises(RuntimeError, match="More than one model file is detected"):
+            catboost_model.load()

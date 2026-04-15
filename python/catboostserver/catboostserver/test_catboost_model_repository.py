@@ -57,3 +57,17 @@ async def test_load_fail():
         # This should not raise an exception but return False
         result = await repository.load("non-existent-model")
         assert result is False
+
+
+def test_repository_init_skips_preload_for_missing_models_dir():
+    missing_dir = os.path.join(
+        tempfile.gettempdir(), "definitely-missing-catboost-model-dir"
+    )
+    if os.path.exists(missing_dir):
+        raise AssertionError(
+            f"Expected missing test directory, found existing path: {missing_dir}"
+        )
+
+    repository = CatBoostModelRepository(missing_dir)
+
+    assert repository.get_models() == {}
