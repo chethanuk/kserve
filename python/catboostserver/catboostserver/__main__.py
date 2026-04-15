@@ -21,9 +21,7 @@ from kserve import logging
 from kserve.errors import ModelMissingError
 from kserve.logging import logger
 
-parser = argparse.ArgumentParser(
-    parents=[kserve.model_server.parser]
-)  # pylint:disable=c-extension-no-member
+parser = argparse.ArgumentParser(parents=[kserve.model_server.parser])  # pylint:disable=c-extension-no-member
 parser.add_argument(
     "--model_dir", required=True, help="A local path to the model directory"
 )
