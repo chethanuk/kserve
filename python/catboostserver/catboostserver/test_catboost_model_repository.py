@@ -37,8 +37,9 @@ async def test_load():
 
         # Test model repository
         repository = CatBoostModelRepository(temp_dir)
-        await repository.load("model")
+        result = await repository.load("model")
 
+        assert result is True
         loaded_model = repository.get_model("model")
         assert loaded_model is not None
         assert loaded_model.ready

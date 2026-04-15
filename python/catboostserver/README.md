@@ -1,6 +1,6 @@
 # CatBoost Server
 
-[CatBoost](https://catboost.ai/) is a high-performance open source library for gradient boosting on decision trees.
+[CatBoost](https://catboost.ai/) is a high-performance open-source library for gradient boosting on decision trees.
 
 To start the server locally for development needs, run the following command under this folder in your github repository.
 
