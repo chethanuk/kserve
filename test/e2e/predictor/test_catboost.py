@@ -37,7 +37,7 @@ PREDICTOR = "catboost"
 
 @pytest.mark.predictor
 @pytest.mark.asyncio(scope="session")
-async def test_catboost_kserve():
+async def test_catboost_kserve(rest_v1_client):
     service_name = "isvc-catboost"
     protocol_version = "v1"
 
@@ -71,8 +71,9 @@ async def test_catboost_kserve():
     )
 
     res = await predict_isvc(
-        service_name=service_name,
-        input_json={
+        rest_v1_client,
+        service_name,
+        {
             "instances": [
                 [6.8, 2.8, 4.8, 1.4],
                 [6.0, 3.4, 4.5, 1.6],
@@ -80,6 +81,7 @@ async def test_catboost_kserve():
         },
     )
 
+    assert isinstance(res, dict)
     assert res["predictions"] is not None
 
     kserve_client.delete(service_name, KSERVE_TEST_NAMESPACE)
@@ -88,7 +90,7 @@ async def test_catboost_kserve():
 @pytest.mark.predictor
 @pytest.mark.runtime
 @pytest.mark.asyncio(scope="session")
-async def test_catboost_runtime_kserve():
+async def test_catboost_runtime_kserve(rest_v1_client):
     service_name = "isvc-catboost-runtime"
     protocol_version = "v1"
 
@@ -126,8 +128,9 @@ async def test_catboost_runtime_kserve():
     )
 
     res = await predict_isvc(
-        service_name=service_name,
-        input_json={
+        rest_v1_client,
+        service_name,
+        {
             "instances": [
                 [6.8, 2.8, 4.8, 1.4],
                 [6.0, 3.4, 4.5, 1.6],
@@ -135,6 +138,7 @@ async def test_catboost_runtime_kserve():
         },
     )
 
+    assert isinstance(res, dict)
     assert res["predictions"] is not None
 
     kserve_client.delete(service_name, KSERVE_TEST_NAMESPACE)
