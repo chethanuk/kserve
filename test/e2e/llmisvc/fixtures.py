@@ -32,35 +32,41 @@ KSERVE_TEST_NAMESPACE = "kserve-ci-e2e-test"
 SCHEDULER_CONFIGMAP_NAME = "scheduler-config-e2e"
 SCHEDULER_CONFIGMAP_KEY = "epp"
 
+# Vanilla Kubernetes rejects runAsNonRoot-only containers when the image does not declare a USER.
+# Keep the templates OpenShift-safe and use an explicit non-root UID only in upstream CI test overrides.
+UPSTREAM_K8S_NON_ROOT_SECURITY_CONTEXT = {
+    "runAsNonRoot": True,
+    "runAsUser": 1000,
+}
+
+UPSTREAM_K8S_VLLM_ENV_OVERRIDES = [
+    {"name": "USER", "value": "nonroot"},
+    {"name": "TORCHINDUCTOR_CACHE_DIR", "value": "/tmp/torchinductor-cache"},
+]
+
+LLMD_SIMULATOR_SECURITY_CONTEXT = {
+    "runAsNonRoot": True,
+    "runAsUser": 65532,
+    "runAsGroup": 65532,
+}
+
 LLMINFERENCESERVICE_CONFIGS = {
     "workload-single-cpu": {
         "template": {
             "containers": [
                 {
                     "name": "main",
-                    "image": "quay.io/pierdipi/vllm-cpu:latest",
-                    "env": [{"name": "VLLM_LOGGING_LEVEL", "value": "DEBUG"}],
+                    "image": "public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo:v0.19.0",
+                    "env": [
+                        {"name": "VLLM_LOGGING_LEVEL", "value": "DEBUG"},
+                        {"name": "VLLM_CPU_KVCACHE_SPACE", "value": "1"},
+                        *UPSTREAM_K8S_VLLM_ENV_OVERRIDES,
+                    ],
                     "resources": {
                         "limits": {"cpu": "2", "memory": "7Gi"},
                         "requests": {"cpu": "200m", "memory": "2Gi"},
                     },
-                    "livenessProbe": {
-                        "initialDelaySeconds": 180,
-                        "periodSeconds": 30,
-                        "timeoutSeconds": 30,
-                        "failureThreshold": 8,
-                    },
-                    "readinessProbe": {
-                        "httpGet": {"path": "/health", "port": 8000},
-                        "initialDelaySeconds": 30,
-                        "periodSeconds": 10,
-                        "timeoutSeconds": 5,
-                        "failureThreshold": 3,
-                    },
-                    "securityContext": {
-                        "runAsNonRoot": False,
-                        "runAsUser": 0,
-                    },
+                    "securityContext": UPSTREAM_K8S_NON_ROOT_SECURITY_CONTEXT.copy(),
                 }
             ]
         },
@@ -70,12 +76,17 @@ LLMINFERENCESERVICE_CONFIGS = {
             "containers": [
                 {
                     "name": "main",
-                    "image": "quay.io/pierdipi/vllm-cpu:latest",
-                    "env": [{"name": "VLLM_LOGGING_LEVEL", "value": "DEBUG"}],
+                    "image": "public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo:v0.19.0",
+                    "env": [
+                        {"name": "VLLM_LOGGING_LEVEL", "value": "DEBUG"},
+                        {"name": "VLLM_CPU_KVCACHE_SPACE", "value": "1"},
+                        *UPSTREAM_K8S_VLLM_ENV_OVERRIDES,
+                    ],
                     "resources": {
                         "limits": {"cpu": "2", "memory": "7Gi"},
                         "requests": {"cpu": "200m", "memory": "2Gi"},
                     },
+                    "securityContext": UPSTREAM_K8S_NON_ROOT_SECURITY_CONTEXT.copy(),
                     "livenessProbe": {
                         "httpGet": {"path": "/health", "port": 8000},
                         "initialDelaySeconds": 180,
@@ -90,10 +101,6 @@ LLMINFERENCESERVICE_CONFIGS = {
                         "timeoutSeconds": 5,
                         "failureThreshold": 3,
                     },
-                    "securityContext": {
-                        "runAsNonRoot": False,
-                        "runAsUser": 0,
-                    },
                 }
             ]
         },
@@ -102,8 +109,12 @@ LLMINFERENCESERVICE_CONFIGS = {
                 "containers": [
                     {
                         "name": "main",
-                        "image": "quay.io/pierdipi/vllm-cpu:latest",
-                        "env": [{"name": "VLLM_LOGGING_LEVEL", "value": "DEBUG"}],
+                        "image": "public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo:v0.19.0",
+                        "env": [
+                            {"name": "VLLM_LOGGING_LEVEL", "value": "DEBUG"},
+                            {"name": "VLLM_CPU_KVCACHE_SPACE", "value": "1"},
+                            *UPSTREAM_K8S_VLLM_ENV_OVERRIDES,
+                        ],
                         "resources": {
                             "limits": {"cpu": "2", "memory": "7Gi"},
                             "requests": {"cpu": "200m", "memory": "2Gi"},
@@ -122,10 +133,7 @@ LLMINFERENCESERVICE_CONFIGS = {
                             "timeoutSeconds": 5,
                             "failureThreshold": 3,
                         },
-                        "securityContext": {
-                            "runAsNonRoot": False,
-                            "runAsUser": 0,
-                        },
+                        "securityContext": UPSTREAM_K8S_NON_ROOT_SECURITY_CONTEXT.copy(),
                     }
                 ]
             }
@@ -329,42 +337,23 @@ LLMINFERENCESERVICE_CONFIGS = {
             "containers": [
                 {
                     "name": "main",
-                    "image": "quay.io/pierdipi/vllm-cpu:latest",
+                    "image": "public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo:v0.19.0",
                     "command": ["vllm", "serve", "/mnt/models"],
                     "args": [
                         "--served-model-name",
                         "{{ .Spec.Model.Name }}",
                         "--port",
                         "8000",
-                        # SSL disabled to match HTTP-only Gateway setup
-                        # "--enable-ssl-refresh",
-                        # "--ssl-certfile",
-                        # "/var/run/kserve/tls/tls.crt",
-                        # "--ssl-keyfile",
-                        # "/var/run/kserve/tls/tls.key",
+                    ],
+                    "env": [
+                        {"name": "VLLM_CPU_KVCACHE_SPACE", "value": "1"},
+                        *UPSTREAM_K8S_VLLM_ENV_OVERRIDES,
                     ],
                     "resources": {
                         "limits": {"cpu": "2", "memory": "7Gi"},
                         "requests": {"cpu": "200m", "memory": "2Gi"},
                     },
-                    "livenessProbe": {
-                        "httpGet": {"path": "/health", "port": 8000, "scheme": "HTTP"},
-                        "initialDelaySeconds": 180,
-                        "periodSeconds": 30,
-                        "timeoutSeconds": 30,
-                        "failureThreshold": 8,
-                    },
-                    "readinessProbe": {
-                        "httpGet": {"path": "/health", "port": 8000, "scheme": "HTTP"},
-                        "initialDelaySeconds": 30,
-                        "periodSeconds": 10,
-                        "timeoutSeconds": 5,
-                        "failureThreshold": 3,
-                    },
-                    "securityContext": {
-                        "runAsNonRoot": False,
-                        "runAsUser": 0,
-                    },
+                    "securityContext": UPSTREAM_K8S_NON_ROOT_SECURITY_CONTEXT.copy(),
                 }
             ]
         },
@@ -372,41 +361,23 @@ LLMINFERENCESERVICE_CONFIGS = {
             "containers": [
                 {
                     "name": "main",
-                    "image": "quay.io/pierdipi/vllm-cpu:latest",
+                    "image": "public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo:v0.19.0",
                     "command": ["vllm", "serve", "/mnt/models"],
                     "args": [
                         "--served-model-name",
                         "{{ .Spec.Model.Name }}",
                         "--port",
                         "8000",
-                        "--enable-ssl-refresh",
-                        "--ssl-certfile",
-                        "/var/run/kserve/tls/tls.crt",
-                        "--ssl-keyfile",
-                        "/var/run/kserve/tls/tls.key",
+                    ],
+                    "env": [
+                        {"name": "VLLM_CPU_KVCACHE_SPACE", "value": "1"},
+                        *UPSTREAM_K8S_VLLM_ENV_OVERRIDES,
                     ],
                     "resources": {
                         "limits": {"cpu": "2", "memory": "7Gi"},
                         "requests": {"cpu": "200m", "memory": "2Gi"},
                     },
-                    "livenessProbe": {
-                        "httpGet": {"path": "/health", "port": 8000, "scheme": "HTTP"},
-                        "initialDelaySeconds": 180,
-                        "periodSeconds": 30,
-                        "timeoutSeconds": 30,
-                        "failureThreshold": 8,
-                    },
-                    "readinessProbe": {
-                        "httpGet": {"path": "/health", "port": 8000, "scheme": "HTTP"},
-                        "initialDelaySeconds": 30,
-                        "periodSeconds": 10,
-                        "timeoutSeconds": 5,
-                        "failureThreshold": 3,
-                    },
-                    "securityContext": {
-                        "runAsNonRoot": False,
-                        "runAsUser": 0,
-                    },
+                    "securityContext": UPSTREAM_K8S_NON_ROOT_SECURITY_CONTEXT.copy(),
                 }
             ]
         },
@@ -720,14 +691,14 @@ LLMINFERENCESERVICE_CONFIGS = {
                             {
                                 "type": "precise-prefix-cache-scorer",
                                 "parameters": {
+                                    "tokenProcessorConfig": {
+                                        "blockSize": 16,
+                                        "hashSeed": "42",
+                                    },
                                     "kvEventsConfig": {
                                         "zmqEndpoint": "tcp://*:5557",
                                     },
                                     "indexerConfig": {
-                                        "tokenProcessorConfig": {
-                                            "blockSize": 16,
-                                            "hashSeed": "42",
-                                        },
                                         "kvBlockIndexConfig": {
                                             "enableMetrics": True,
                                             "metricsLoggingInterval": 60000000000,
@@ -799,7 +770,7 @@ LLMINFERENCESERVICE_CONFIGS = {
             "containers": [
                 {
                     "name": "main",
-                    "image": "ghcr.io/llm-d/llm-d-inference-sim:v0.5.1",
+                    "image": "ghcr.io/llm-d/llm-d-inference-sim:v0.8.2",
                     "command": ["/app/llm-d-inference-sim"],
                     "args": [
                         "--port",
@@ -808,15 +779,12 @@ LLMINFERENCESERVICE_CONFIGS = {
                         "{{ .Spec.Model.Name }}",
                         "--mode",
                         "random",
-                        # "--ssl-certfile",
-                        # "/var/run/kserve/tls/tls.crt",
-                        # "--ssl-keyfile",
-                        # "/var/run/kserve/tls/tls.key",
                     ],
                     "resources": {
                         "limits": {"cpu": "1", "memory": "2Gi"},
                         "requests": {"cpu": "200m", "memory": "2Gi"},
                     },
+                    "securityContext": LLMD_SIMULATOR_SECURITY_CONTEXT.copy(),
                 }
             ]
         },
@@ -828,7 +796,7 @@ LLMINFERENCESERVICE_CONFIGS = {
             "containers": [
                 {
                     "name": "main",
-                    "image": "ghcr.io/llm-d/llm-d-inference-sim:v0.5.1",
+                    "image": "ghcr.io/llm-d/llm-d-inference-sim:v0.8.2",
                     "command": ["/app/llm-d-inference-sim"],
                     "args": [
                         "--port",
@@ -862,6 +830,7 @@ LLMINFERENCESERVICE_CONFIGS = {
                         "limits": {"cpu": "1", "memory": "2Gi"},
                         "requests": {"cpu": "20m", "memory": "20Mi"},
                     },
+                    "securityContext": LLMD_SIMULATOR_SECURITY_CONTEXT.copy(),
                 }
             ]
         },
@@ -971,7 +940,7 @@ def generate_k8s_safe_suffix(
 
     full_name = full_name.lower().replace("_", "-")
 
-    name_hash = hashlib.md5(full_name.encode()).hexdigest()[:8]
+    name_hash = hashlib.sha256(full_name.encode()).hexdigest()[:8]
 
     # TODO: we can't use the real maximum (63), LWS and STS add additional suffixes (ie `-0`) and don't handle that case.
     max_total = 40
