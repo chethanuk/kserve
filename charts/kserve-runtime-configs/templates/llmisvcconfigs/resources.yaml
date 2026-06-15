@@ -1,3 +1,9 @@
 {{- if .Values.kserve.llmisvcConfigs.enabled }}
-{{ .Files.Get "files/llmisvcconfigs/resources.yaml" }}
+{{- /* Presets are intentionally non-YAML (controller-side Go templates), so we
+       string-transform the blob rather than tpl/fromYaml it. */ -}}
+{{- $c := .Files.Get "files/llmisvcconfigs/resources.yaml" -}}
+{{- $c = include "kserve-common.replaceNamespace" (list $c .Release.Namespace) -}}
+{{- $c = include "kserve-runtime-configs.replaceLLMImages" (list $c .Values) -}}
+{{- $c = include "kserve-runtime-configs.applyLLMImagePullPolicy" (list $c .Values) -}}
+{{ $c }}
 {{- end }}

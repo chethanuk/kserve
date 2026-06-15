@@ -1,0 +1,17 @@
+# Point the kustomize "images" transformer at the non-standard image paths
+# inside LLMInferenceServiceConfig presets so downstream overlays (and the
+# generated Helm chart) can override the llm-d image repos/tags.
+# Mirrors config/storagecontainers/configuration.yaml.
+images:
+- kind: LLMInferenceServiceConfig
+  path: spec/template/containers/image
+- kind: LLMInferenceServiceConfig
+  path: spec/template/initContainers/image
+- kind: LLMInferenceServiceConfig
+  path: spec/worker/containers/image
+- kind: LLMInferenceServiceConfig
+  path: spec/prefill/template/containers/image
+- kind: LLMInferenceServiceConfig
+  path: spec/prefill/worker/containers/image
+- kind: LLMInferenceServiceConfig
+  path: spec/router/scheduler/template/containers/image

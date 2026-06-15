@@ -2,6 +2,25 @@ kserve:
   version: v0.19.0
   llmisvcConfigs:
     enabled: false
+    # Override the llm-d preset images. The repo is matched on its original
+    # value, so a tag-only bump in config/llmisvcconfig still gets repointed.
+    images:
+      workload:
+        image: ghcr.io/llm-d/llm-d-cuda
+        tag: v0.6.0
+      routingSidecar:
+        image: ghcr.io/llm-d/llm-d-routing-sidecar
+        tag: v0.7.1
+      scheduler:
+        image: ghcr.io/llm-d/llm-d-inference-scheduler
+        tag: v0.7.1
+      tokenizer:
+        image: ghcr.io/llm-d/llm-d-uds-tokenizer
+        tag: v0.7.1
+    # Applied to every preset container (presets ship IfNotPresent).
+    imagePullPolicy: IfNotPresent
+    # imagePullSecrets is not yet templated for presets: the preset blob has no
+    # such field and is not parseable YAML, so it cannot be injected safely. TODO.
   servingruntime:
     enabled: false
     modelNamePlaceholder: "{{.Name}}"
