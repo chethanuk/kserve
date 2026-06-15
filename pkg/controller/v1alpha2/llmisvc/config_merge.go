@@ -151,7 +151,24 @@ func (r *LLMISVCReconciler) reconcileBaseRefs(ctx context.Context, llmSvc *v1alp
 
 		var cfgNotFound *configNotFoundError
 		if errors.As(err, &cfgNotFound) {
-			llmSvc.MarkPresetsCombinedNotReady("ConfigNotFound", cfgNotFound.Error())
+			msg := cfgNotFound.Error()
+			eventReason := "ConfigNotFound"
+			if WellKnownDefaultConfigs.Has(cfgNotFound.Name) {
+				// A missing well-known preset almost always means the runtime
+				// configs were never installed; make that actionable instead of
+				// a silent stall.
+				msg = fmt.Sprintf("required preset %q for the selected topology is not installed in %v; "+
+					"install the runtime configs (e.g. `helm ... --set kserve.llmisvcConfigs.enabled=true`), "+
+					"or supply the workload section inline or via spec.baseRefs",
+					cfgNotFound.Name, cfgNotFound.Namespaces)
+				eventReason = "PresetMissing"
+			}
+			// Keep the condition reason stable ("ConfigNotFound") so existing
+			// watchers and assertions stay valid.
+			llmSvc.MarkPresetsCombinedNotReady("ConfigNotFound", "%s", msg)
+			if r.EventRecorder != nil {
+				r.Eventf(llmSvc, corev1.EventTypeWarning, eventReason, "%s", msg)
+			}
 			return nil, nil // watch on LLMInferenceServiceConfig re-triggers when the config is recreated
 		}
 
