@@ -13,3 +13,23 @@ resources:
   - config-llm-template.yaml
   - config-llm-tracing.yaml
   - config-llm-worker-data-parallel.yaml
+
+# Teach the images transformer about the nested image paths in the presets.
+configurations:
+  - configuration.yaml
+
+# Defaults match the current pins, so `kustomize build` output is unchanged.
+# Overlays can override newName/newTag to repoint the llm-d images.
+images:
+  - name: ghcr.io/llm-d/llm-d-cuda
+    newName: ghcr.io/llm-d/llm-d-cuda
+    newTag: v0.6.0
+  - name: ghcr.io/llm-d/llm-d-routing-sidecar
+    newName: ghcr.io/llm-d/llm-d-routing-sidecar
+    newTag: v0.7.1
+  - name: ghcr.io/llm-d/llm-d-inference-scheduler
+    newName: ghcr.io/llm-d/llm-d-inference-scheduler
+    newTag: v0.7.1
+  - name: ghcr.io/llm-d/llm-d-uds-tokenizer
+    newName: ghcr.io/llm-d/llm-d-uds-tokenizer
+    newTag: v0.7.1
