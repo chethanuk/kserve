@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/kserve/kserve/pkg/apis/serving/v1alpha2"
@@ -128,4 +129,43 @@ func TestReconcileBaseRefs_PreservesAppliedConfigRefsWhenStopped(t *testing.T) {
 	assert.NotNil(t, combined)
 
 	assert.Equal(t, existingRefs, llmSvc.Status.AppliedConfigRefs, "AppliedConfigRefs should be preserved when service is stopped")
+}
+
+// A model-only service still relies on the well-known template preset; if it is
+// missing the failure must be actionable (enriched message + PresetMissing event).
+func TestReconcileBaseRefs_MissingWellKnownPresetIsActionable(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, v1alpha2.AddToScheme(scheme))
+
+	recorder := record.NewFakeRecorder(10)
+	reconciler := &LLMISVCReconciler{
+		Client:        fake.NewClientBuilder().WithScheme(scheme).Build(),
+		EventRecorder: recorder,
+	}
+
+	llmSvc := &v1alpha2.LLMInferenceService{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-llm-model-only",
+			Namespace: "test-ns",
+		},
+		Spec: v1alpha2.LLMInferenceServiceSpec{}, // single-node, no inline template
+	}
+
+	combined, err := reconciler.reconcileBaseRefs(t.Context(), llmSvc, &Config{})
+	assert.NoError(t, err)
+	assert.Nil(t, combined)
+
+	cond := llmSvc.Status.GetCondition(v1alpha2.PresetsCombined)
+	require.NotNil(t, cond)
+	assert.Equal(t, "ConfigNotFound", cond.Reason, "condition reason stays stable")
+	assert.Contains(t, cond.Message, "not installed")
+	assert.Contains(t, cond.Message, "helm")
+
+	select {
+	case ev := <-recorder.Events:
+		assert.Contains(t, ev, "PresetMissing")
+		assert.Contains(t, ev, "Warning")
+	default:
+		t.Fatal("expected a PresetMissing warning event")
+	}
 }
