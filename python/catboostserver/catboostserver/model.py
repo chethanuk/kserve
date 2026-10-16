@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import os
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 import catboost as cb
 from kserve.errors import InferenceError, ModelMissingError
@@ -68,11 +68,19 @@ class CatBoostModel(Model):
         return self.ready
 
     def predict(
-        self, payload: Union[Dict, InferRequest], headers: Dict[str, str] = None
+        self,
+        payload: Union[Dict, InferRequest],
+        headers: Optional[Dict[str, str]] = None,
     ) -> Union[Dict, InferResponse]:
         try:
             instances = get_predict_input(payload)
-            result = self._model.predict(instances)
+            # CatBoost.predict() defaults to RawFormulaVal (logits for classifiers).
+            # Classifiers return class labels, like xgbserver; regressors have no
+            # classes_ and keep their raw value.
+            prediction_type = "Class" if len(self._model.classes_) else "RawFormulaVal"
+            result = self._model.predict(instances, prediction_type=prediction_type)
+            if result.ndim == 2 and result.shape[1] == 1:
+                result = result.ravel()
             return get_predict_response(payload, result, self.name)
         except Exception as e:
             raise InferenceError(str(e))

@@ -32,6 +32,10 @@ from ..common.utils import KSERVE_TEST_NAMESPACE, predict_isvc
 
 logging.basicConfig(level=logging.INFO)
 MODEL_NAME = "catboost"
+# NOTE: this iris model (python/catboostserver/example_model/model/model.cbm) must be uploaded to
+# gs://kfserving-examples/models/catboost/iris by a maintainer before these tests can pass.
+# Expected [1, 1] is the class the committed model predicts for the two inputs below.
+CATBOOST_IRIS_URI = "gs://kfserving-examples/models/catboost/iris"
 PREDICTOR = "catboost"
 
 
@@ -44,7 +48,7 @@ async def test_catboost_kserve():
     predictor_spec = V1beta1PredictorSpec(
         min_replicas=1,
         catboost=V1beta1CatBoostSpec(
-            storage_uri="gs://kfserving-examples/models/catboost/iris",
+            storage_uri=CATBOOST_IRIS_URI,
             protocol_version=protocol_version,
             resources=client.V1ResourceRequirements(
                 requests={"cpu": "50m", "memory": "256Mi"},
@@ -62,9 +66,13 @@ async def test_catboost_kserve():
         spec=V1beta1InferenceServiceSpec(predictor=predictor_spec),
     )
 
-    kserve_client = KServeClient(config_file=os.environ.get("KUBECONFIG", "~/.kube/config"))
+    kserve_client = KServeClient(
+        config_file=os.environ.get("KUBECONFIG", "~/.kube/config")
+    )
     kserve_client.create(isvc)
-    kserve_client.wait_isvc_ready(service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720)
+    kserve_client.wait_isvc_ready(
+        service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
+    )
 
     res = await predict_isvc(
         service_name=service_name,
@@ -76,7 +84,7 @@ async def test_catboost_kserve():
         },
     )
 
-    assert res["predictions"] is not None
+    assert res["predictions"] == [1, 1]
 
     kserve_client.delete(service_name, KSERVE_TEST_NAMESPACE)
 
@@ -95,7 +103,7 @@ async def test_catboost_runtime_kserve():
                 name="catboost",
             ),
             runtime="kserve-catboostserver",
-            storage_uri="gs://kfserving-examples/models/catboost/iris",
+            storage_uri=CATBOOST_IRIS_URI,
             protocol_version=protocol_version,
             resources=client.V1ResourceRequirements(
                 requests={"cpu": "50m", "memory": "256Mi"},
@@ -113,9 +121,13 @@ async def test_catboost_runtime_kserve():
         spec=V1beta1InferenceServiceSpec(predictor=predictor_spec),
     )
 
-    kserve_client = KServeClient(config_file=os.environ.get("KUBECONFIG", "~/.kube/config"))
+    kserve_client = KServeClient(
+        config_file=os.environ.get("KUBECONFIG", "~/.kube/config")
+    )
     kserve_client.create(isvc)
-    kserve_client.wait_isvc_ready(service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720)
+    kserve_client.wait_isvc_ready(
+        service_name, namespace=KSERVE_TEST_NAMESPACE, timeout=720
+    )
 
     res = await predict_isvc(
         service_name=service_name,
@@ -127,6 +139,6 @@ async def test_catboost_runtime_kserve():
         },
     )
 
-    assert res["predictions"] is not None
+    assert res["predictions"] == [1, 1]
 
     kserve_client.delete(service_name, KSERVE_TEST_NAMESPACE)

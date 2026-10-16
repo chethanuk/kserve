@@ -13,6 +13,11 @@
 # limitations under the License.
 
 import os
+
+import catboost as cb
+import numpy as np
+from kserve.protocol.infer_type import InferInput, InferRequest
+
 from catboostserver import CatBoostModel
 
 # Use example model following KServe pattern
@@ -30,8 +35,8 @@ def test_cbm_model():
     request = {"instances": [[6.8, 2.8, 4.8, 1.4], [6.0, 3.4, 4.5, 1.6]]}
     response = catboost_model.predict(request)
 
-    assert "predictions" in response
-    assert len(response["predictions"]) == 2
+    # Class labels (like xgbserver), not raw logits; the iris model predicts class 1 for both.
+    assert response == {"predictions": [1, 1]}
 
 
 def test_model_formats():
@@ -42,3 +47,34 @@ def test_model_formats():
 
     assert catboost_model.ready
     assert catboost_model._model is not None
+
+
+def test_v2_predict_returns_class_labels():
+    catboost_model = CatBoostModel("test-model", example_model_dir)
+    catboost_model.load()
+
+    infer_input = InferInput(
+        name="input-0",
+        shape=[2, 4],
+        datatype="FP32",
+        data=[[6.8, 2.8, 4.8, 1.4], [6.0, 3.4, 4.5, 1.6]],
+    )
+    request = InferRequest(model_name="test-model", infer_inputs=[infer_input])
+    response, _ = catboost_model.predict(request).to_rest()
+
+    assert response["outputs"][0]["shape"] == [2]
+    assert response["outputs"][0]["data"] == [1, 1]
+
+
+def test_regression_model_returns_raw_values():
+    """Class prediction_type is invalid for regressors; they must still predict."""
+    rng = np.random.default_rng(0)
+    X = rng.random((50, 3))
+    regressor = cb.CatBoost({"loss_function": "RMSE", "iterations": 5, "verbose": 0})
+    regressor.fit(X, X.sum(axis=1))
+
+    response = CatBoostModel("reg", example_model_dir, model=regressor).predict(
+        {"instances": X[:2].tolist()}
+    )
+
+    assert response["predictions"] == regressor.predict(X[:2]).tolist()

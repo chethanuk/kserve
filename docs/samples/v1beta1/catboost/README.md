@@ -6,6 +6,9 @@ This example shows how to deploy a CatBoost model using KServe.
 
 1. Your cluster has KServe installed
 2. Your model is saved in CatBoost format (.cbm or .bin)
+3. The iris example model (`python/catboostserver/example_model/model/model.cbm`) is uploaded to the `storageUri` in `catboost.yaml`
+
+Classifiers return class labels; regressors return raw predicted values.
 
 ## Create the InferenceService
 
@@ -43,9 +46,7 @@ Expected Output:
 
 ```json
 {
-  "predictions": [
-    [0.9, 0.05, 0.05]
-  ]
+  "predictions": [1, 1]
 }
 ```
 

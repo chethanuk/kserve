@@ -5,4 +5,5 @@ metadata:
 spec:
   predictor:
     catboost:
+      # Upload python/catboostserver/example_model/model/model.cbm to this location (or use your own model).
       storageUri: "gs://kfserving-examples/models/catboost/iris"
