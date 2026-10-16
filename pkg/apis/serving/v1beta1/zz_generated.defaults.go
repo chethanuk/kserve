@@ -1397,6 +1397,49 @@ func SetObjectDefaults_InferenceService(in *InferenceService) {
 				}
 			}
 		}
+		if a.Predictor.CatBoost != nil {
+			for j := range a.Predictor.CatBoost.PredictorExtensionSpec.Container.Ports {
+				b := &a.Predictor.CatBoost.PredictorExtensionSpec.Container.Ports[j]
+				if b.Protocol == "" {
+					b.Protocol = "TCP"
+				}
+			}
+			for j := range a.Predictor.CatBoost.PredictorExtensionSpec.Container.Env {
+				b := &a.Predictor.CatBoost.PredictorExtensionSpec.Container.Env[j]
+				if b.ValueFrom != nil {
+					if b.ValueFrom.FileKeyRef != nil {
+						if b.ValueFrom.FileKeyRef.Optional == nil {
+							var ptrVar1 bool = false
+							b.ValueFrom.FileKeyRef.Optional = &ptrVar1
+						}
+					}
+				}
+			}
+			if a.Predictor.CatBoost.PredictorExtensionSpec.Container.LivenessProbe != nil {
+				if a.Predictor.CatBoost.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC != nil {
+					if a.Predictor.CatBoost.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service == nil {
+						var ptrVar1 string = ""
+						a.Predictor.CatBoost.PredictorExtensionSpec.Container.LivenessProbe.ProbeHandler.GRPC.Service = &ptrVar1
+					}
+				}
+			}
+			if a.Predictor.CatBoost.PredictorExtensionSpec.Container.ReadinessProbe != nil {
+				if a.Predictor.CatBoost.PredictorExtensionSpec.Container.ReadinessProbe.ProbeHandler.GRPC != nil {
+					if a.Predictor.CatBoost.PredictorExtensionSpec.Container.ReadinessProbe.ProbeHandler.GRPC.Service == nil {
+						var ptrVar1 string = ""
+						a.Predictor.CatBoost.PredictorExtensionSpec.Container.ReadinessProbe.ProbeHandler.GRPC.Service = &ptrVar1
+					}
+				}
+			}
+			if a.Predictor.CatBoost.PredictorExtensionSpec.Container.StartupProbe != nil {
+				if a.Predictor.CatBoost.PredictorExtensionSpec.Container.StartupProbe.ProbeHandler.GRPC != nil {
+					if a.Predictor.CatBoost.PredictorExtensionSpec.Container.StartupProbe.ProbeHandler.GRPC.Service == nil {
+						var ptrVar1 string = ""
+						a.Predictor.CatBoost.PredictorExtensionSpec.Container.StartupProbe.ProbeHandler.GRPC.Service = &ptrVar1
+					}
+				}
+			}
+		}
 		if a.Predictor.Tensorflow != nil {
 			for j := range a.Predictor.Tensorflow.PredictorExtensionSpec.Container.Ports {
 				b := &a.Predictor.Tensorflow.PredictorExtensionSpec.Container.Ports[j]

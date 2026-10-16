@@ -253,6 +253,14 @@ jobs:
           compression-level: 0
           if-no-files-found: error
 
+      - name: Upload catboost server image
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ env.PREDICTOR_ARTIFACT_PREFIX }}-${{ env.CATBOOST_IMG }}-${{ env.TAG }}
+          path: ${{ env.DOCKER_IMAGES_PATH }}/${{ env.CATBOOST_IMG }}-${{ env.TAG }}
+          compression-level: 0
+          if-no-files-found: error
+
       - name: Upload pmml server image
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

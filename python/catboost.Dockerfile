@@ -4,36 +4,38 @@ ARG VENV_PATH=/prod_venv
 
 FROM ${BASE_IMAGE} AS builder
 
-# Install necessary dependencies for building Python packages
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends python3-dev curl build-essential && apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install uv
+# Install uv and ensure it's in PATH
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
     ln -s /root/.local/bin/uv /usr/local/bin/uv
 
 # Activate virtual env
 ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
-RUN python3 -m venv ${VIRTUAL_ENV}
+RUN uv venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Copy and install dependencies for kserve using uv
+# Copy storage metadata for editable dependency resolution
+COPY storage/pyproject.toml storage/uv.lock storage/
+
+# Install dependencies for kserve using uv
 COPY kserve/pyproject.toml kserve/uv.lock kserve/
 RUN cd kserve && uv sync --active --no-cache
+
 COPY kserve kserve
 RUN cd kserve && uv sync --active --no-cache
 
-# Copy and install dependencies for kserve-storage using uv
-COPY storage/pyproject.toml storage/uv.lock storage/
-RUN cd storage && uv sync --active --no-cache
-
+# Install kserve-storage
 COPY storage storage
 RUN cd storage && uv pip install . --no-cache
 
-# Copy and install dependencies for catboostserver using uv
+# Install dependencies for catboostserver using uv
 COPY catboostserver/pyproject.toml catboostserver/uv.lock catboostserver/
 RUN cd catboostserver && uv sync --active --no-cache
+
 COPY catboostserver catboostserver
 RUN cd catboostserver && uv sync --active --no-cache
 
@@ -42,20 +44,20 @@ COPY pyproject.toml pyproject.toml
 COPY third_party/pip-licenses.py pip-licenses.py
 RUN mkdir -p third_party/library && python3 pip-licenses.py
 
-# ---------- Production Image ----------
+# ---------- Production image ----------
 FROM ${BASE_IMAGE} AS prod
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libgomp1 && \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Activate virtual env
 ARG VENV_PATH
 ENV VIRTUAL_ENV=${VENV_PATH}
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV PATH="${VIRTUAL_ENV}/bin:$PATH"
 
-# Create a non-root user for running the application
+# Create non-root user
 RUN useradd kserve -m -u 1000 -d /home/kserve
 
 COPY --from=builder --chown=kserve:kserve third_party third_party

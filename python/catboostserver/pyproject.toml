@@ -10,7 +10,7 @@ dependencies = [
     "catboost~=1.2.7",
 ]
 name = "catboostserver"
-version = "0.19.0"
+version = "0.21.0"
 description = "Model Server implementation for CatBoost. Not intended for use outside KServe Frameworks Images."
 readme = "README.md"
 
