@@ -26,6 +26,9 @@ images:
 - name: kserve/lgbserver
   newTag: latest
 
+- name: kserve/catboostserver
+  newTag: latest
+
 - name: kserve/storage-initializer
   newTag: latest
 
