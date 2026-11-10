@@ -110,6 +110,7 @@ from kserve.models.v1beta1_autoscaler_config import V1beta1AutoscalerConfig
 from kserve.models.v1beta1_batcher import V1beta1Batcher
 from kserve.models.v1beta1_canary_spec import V1beta1CanarySpec
 from kserve.models.v1beta1_canary_status import V1beta1CanaryStatus
+from kserve.models.v1beta1_cat_boost_spec import V1beta1CatBoostSpec
 from kserve.models.v1beta1_component_extension_spec import V1beta1ComponentExtensionSpec
 from kserve.models.v1beta1_component_status_spec import V1beta1ComponentStatusSpec
 from kserve.models.v1beta1_confidential_spec import V1beta1ConfidentialSpec
