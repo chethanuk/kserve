@@ -1634,6 +1634,54 @@ func TestAssignHuggingFaceRuntime(t *testing.T) {
 	}
 }
 
+func TestAssignCatBoostRuntime(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+
+	deployConfig := &DeployConfig{
+		DefaultDeploymentMode: string(constants.Knative),
+	}
+	protocolV2 := constants.ProtocolV2
+
+	scenarios := map[string]struct {
+		ext              PredictorExtensionSpec
+		expectedProtocol *constants.InferenceServiceProtocol // nil: runtime defaulting sets it later
+		expectedURI      string
+	}{
+		"LeavesProtocolUnsetForRuntimeDefaults": {
+			ext:         PredictorExtensionSpec{StorageURI: proto.String("gs://testbucket/catboost")},
+			expectedURI: "gs://testbucket/catboost",
+		},
+		"KeepsExplicitProtocolV2": {
+			ext: PredictorExtensionSpec{
+				StorageURI:      proto.String("gs://testbucket/catboost"),
+				ProtocolVersion: &protocolV2,
+			},
+			expectedProtocol: &protocolV2,
+			expectedURI:      "gs://testbucket/catboost",
+		},
+	}
+
+	for name, scenario := range scenarios {
+		t.Run(name, func(t *testing.T) {
+			isvc := &InferenceService{
+				ObjectMeta: metav1.ObjectMeta{Name: "catboost-model", Namespace: "default"},
+				Spec: InferenceServiceSpec{
+					Predictor: PredictorSpec{
+						CatBoost: &CatBoostSpec{PredictorExtensionSpec: scenario.ext},
+					},
+				},
+			}
+			isvc.DefaultInferenceService(&InferenceServicesConfig{}, deployConfig, nil, nil, nil)
+
+			g.Expect(isvc.Spec.Predictor.CatBoost).To(gomega.BeNil())
+			g.Expect(isvc.Spec.Predictor.Model).ToNot(gomega.BeNil())
+			g.Expect(isvc.Spec.Predictor.Model.ModelFormat.Name).To(gomega.Equal(constants.SupportedModelCatBoost))
+			g.Expect(isvc.Spec.Predictor.Model.ProtocolVersion).To(gomega.Equal(scenario.expectedProtocol))
+			g.Expect(*isvc.Spec.Predictor.Model.StorageURI).To(gomega.Equal(scenario.expectedURI))
+		})
+	}
+}
+
 func TestDefaultInferenceServiceWithLocalModel(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 

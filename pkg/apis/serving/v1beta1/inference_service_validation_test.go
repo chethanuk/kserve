@@ -2390,6 +2390,25 @@ func TestValidateBlockedEnvVars(t *testing.T) {
 			},
 			expectErr: true,
 		},
+		"PYTHONPATH in catboost predictor env should be rejected": {
+			isvc: &InferenceService{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-isvc"},
+				Spec: InferenceServiceSpec{
+					Predictor: PredictorSpec{
+						CatBoost: &CatBoostSpec{
+							PredictorExtensionSpec: PredictorExtensionSpec{
+								Container: corev1.Container{
+									Env: []corev1.EnvVar{
+										{Name: "PYTHONPATH", Value: "/custom"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectErr: true,
+		},
 		"PYTHONPATH in predictor custom container should be rejected": {
 			isvc: &InferenceService{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-isvc"},

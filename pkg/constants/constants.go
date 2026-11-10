@@ -742,6 +742,7 @@ const (
 	SupportedModelSKLearn     = "sklearn"
 	SupportedModelTensorflow  = "tensorflow"
 	SupportedModelXGBoost     = "xgboost"
+	SupportedModelCatBoost    = "catboost"
 	SupportedModelPyTorch     = "pytorch"
 	SupportedModelONNX        = "onnx"
 	SupportedModelHuggingFace = "huggingface"

@@ -293,6 +293,8 @@ func validatePredictor(isvc *InferenceService) error {
 		return errors.New("the 'name' field is not allowed in standard predictor")
 	case predictor.XGBoost != nil && predictor.XGBoost.Name != "":
 		return errors.New("the 'name' field is not allowed in standard predictor")
+	case predictor.CatBoost != nil && predictor.CatBoost.Name != "":
+		return errors.New("the 'name' field is not allowed in standard predictor")
 	case predictor.Tensorflow != nil && predictor.Tensorflow.Name != "":
 		return errors.New("the 'name' field is not allowed in standard predictor")
 	case predictor.PyTorch != nil && predictor.PyTorch.Name != "":
@@ -377,6 +379,8 @@ func predictorFrameworkContainer(p *PredictorSpec) *corev1.Container {
 		return &p.SKLearn.Container
 	case p.XGBoost != nil:
 		return &p.XGBoost.Container
+	case p.CatBoost != nil:
+		return &p.CatBoost.Container
 	case p.Tensorflow != nil:
 		return &p.Tensorflow.Container
 	case p.PyTorch != nil:
@@ -951,6 +955,8 @@ func GetConfidentialSpecFromPredictor(predictor *PredictorSpec) *ConfidentialSpe
 		return predictor.SKLearn.Confidential
 	case predictor.XGBoost != nil:
 		return predictor.XGBoost.Confidential
+	case predictor.CatBoost != nil:
+		return predictor.CatBoost.Confidential
 	case predictor.Tensorflow != nil:
 		return predictor.Tensorflow.Confidential
 	case predictor.PyTorch != nil:

@@ -77,6 +77,7 @@ from .models.knative_volatile_time import KnativeVolatileTime
 from .models.net_url_userinfo import NetUrlUserinfo
 from .models.v1beta1_art_explainer_spec import V1beta1ARTExplainerSpec
 from .models.v1beta1_batcher import V1beta1Batcher
+from .models.v1beta1_cat_boost_spec import V1beta1CatBoostSpec
 from .models.v1beta1_component_extension_spec import V1beta1ComponentExtensionSpec
 from .models.v1beta1_component_status_spec import V1beta1ComponentStatusSpec
 from .models.v1beta1_custom_explainer import V1beta1CustomExplainer
