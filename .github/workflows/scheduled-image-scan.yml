@@ -74,6 +74,7 @@ jobs:
             { name: pmmlserver, file: python/pmml.Dockerfile },
             { name: paddleserver, file: python/paddle.Dockerfile },
             { name: lgbserver, file: python/lgb.Dockerfile },
+            { name: catboostserver, file: python/catboost.Dockerfile },
             { name: huggingfaceserver, file: python/huggingface_server.Dockerfile },
           ]
 

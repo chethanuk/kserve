@@ -44,6 +44,7 @@ LGB_IMG_TAG=${KO_DOCKER_REPO}/${LGB_IMG}:${TAG}
 PMML_IMG_TAG=${KO_DOCKER_REPO}/${PMML_IMG}:${TAG}
 PADDLE_IMG_TAG=${KO_DOCKER_REPO}/${PADDLE_IMG}:${TAG}
 AUTOGLUON_IMG_TAG=${KO_DOCKER_REPO}/${AUTOGLUON_IMG}:${TAG}
+CATBOOST_IMG_TAG=${KO_DOCKER_REPO}/${CATBOOST_IMG}:${TAG}
 CUSTOM_MODEL_GRPC_IMG_TAG=${KO_DOCKER_REPO}/${CUSTOM_MODEL_GRPC_IMG}:${TAG}
 CUSTOM_TRANSFORMER_GRPC_IMG_TAG=${KO_DOCKER_REPO}/${CUSTOM_TRANSFORMER_GRPC_IMG}:${TAG}
 HUGGINGFACE_CPU_IMG_TAG=${KO_DOCKER_REPO}/${HUGGINGFACE_IMG}:${TAG}
@@ -105,6 +106,11 @@ pushd python >/dev/null
     docker buildx build -t "${AUTOGLUON_IMG_TAG}" -f autogluon.Dockerfile \
       -o type=docker,dest="${DOCKER_IMAGES_PATH}/${AUTOGLUON_IMG}-${TAG}",compression-level=0 .
     echo "Disk usage after Building AutoGluon server image:"
+        df -hT
+    echo "Building CatBoost server image"
+    docker buildx build -t "${CATBOOST_IMG_TAG}" -f catboost.Dockerfile \
+      -o type=docker,dest="${DOCKER_IMAGES_PATH}/${CATBOOST_IMG}-${TAG}",compression-level=0 .
+    echo "Disk usage after Building CatBoost server image:"
         df -hT
   fi
 
