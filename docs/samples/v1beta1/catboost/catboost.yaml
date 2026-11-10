@@ -1,0 +1,9 @@
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "catboost-iris"
+spec:
+  predictor:
+    catboost:
+      # A maintainer must upload python/catboostserver/example_model/model/model.cbm here (or use your own model).
+      storageUri: "gs://kfserving-examples/models/catboost/iris"
